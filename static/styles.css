@@ -5,7 +5,7 @@ body {
     padding: 0;
     text-align: center;
     padding-bottom: 0px;
-    padding-top: 95px;
+    padding-top: 90px;
     overflow-x: hidden;
     height: 100%;
     min-height: 100vh;
@@ -20,15 +20,13 @@ header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    width: 98%;
-    padding: 20px;
+    width: 100%;
+    padding: 15px;
     position: fixed;
     top: 0;
     left: 0;
     z-index: 100;
     background-color: #006d57;
-    border-top-left-radius: 15px;
-    border-top-right-radius: 15px;
     overflow: hidden;
 }
 
