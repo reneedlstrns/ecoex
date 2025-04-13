@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% include 'head.html' %}
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="container">
+        <!-- Sidebar (same as myprofile.html) -->
+        <aside class="sidebar">
+            <div class="profile">
+                <img src="{{ url_for('static', filename='media/profilesample1.jpg') }}" alt="User Profile">
+                <h2>Hi, {{ username }}!</h2>
+            </div>
+            <div class="impact-pts">
+                <span>
+                    <img src="{{ url_for('static', filename='media/recycle.png') }}" alt="Recycle Icon" class="icon">
+                     You've made {{ impact_points }} impact!
+                    <img src="{{ url_for('static', filename='media/recycle.png') }}" alt="Recycle Icon" class="icon">
+                </span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="{{ url_for('profile') }}">Edit Profile</a></li>
+                <li><a href="{{ url_for('donations') }}">Donations</a></li>
+                <li><a href="{{ url_for('collections') }}">Collections</a></li>
+                <li><a href="{{ url_for('impact') }}">Impact</a></li>
+                <li><a href="{{ url_for('connections') }}" class="active">Connections</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content Section -->
+        <div class="content-container">
+            <div class="impact-section">
+                <h2 class="page-title">Request Details</h2>
+
+                <div class="request-card">
+                    <div class="request-info">
+                        <p><strong>Sender:</strong> {{ request.sender_name }}</p>
+                        <p><strong>Item:</strong> {{ request.item_name }}</p>
+                        <p><strong>Requested:</strong> {{ request.time }}</p>
+                        <p><strong>Description:</strong> {{ request.description or 'No description provided.' }}</p>
+                        <p><strong>Status:</strong> {{ request.status or 'Pending' }}</p>
+                        <p><strong>Location:</strong> {{ request.location or 'Not specified' }}</p>
+                    </div>
+
+                    <div class="request-actions">
+                        <button onclick="handleConfirm('{{ request.id }}')">Confirm</button>
+                        <button onclick="handleDeny('{{ request.id }}')">Deny</button>
+                        <a href="{{ url_for('connections') }}">
+                            <button>Back to Connections</button>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+{% include 'head.html' %}
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="donation-section">
+        <h2 class="page-title">{{ post.title }}</h2>
+        <div class="donation-card">
+            <p><strong>Category:</strong> {{ post.category }}</p>
+            <p><strong>Description:</strong> {{ post.description }}</p>
+            {% if post.username %}
+            <p><strong>Uploaded by:</strong> {{ post.username }} from {{ post.location }}</p>
+<p class="post-date">{{ post.date_posted }}</p>
+            {% endif %}
+        </div>
+
+
+        <a href="{{ url_for('discover') }}" class="back-btn">← Back to Discover</a>
+    </div>
+
+    {% include 'footer.html' %}
+</body>
+</html>

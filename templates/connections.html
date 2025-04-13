@@ -5,6 +5,31 @@
     <title>Title</title>
 </head>
 <body>
-Add your connections here.
+<div class="connections-section">
+    <h2 class="page-title">Connections</h2>
+
+    {% if requests %}
+        <ul class="request-list">
+            {% for req in requests %}
+                <li class="request-card">
+                    <div class="request-info">
+                        <p><strong>{{ req.sender_name }}</strong> has requested to collect your donation: <em>{{ req.item_name }}</em></p>
+                        <p class="timestamp">{{ req.time }}</p>
+                    </div>
+                    <div class="request-actions">
+                        <a href="{{ url_for('view_request', request_id=req.id) }}">
+                                <button>View</button>
+                            </a>
+
+                        <button onclick="handleDeny('{{ req.id }}')">Deny</button>
+                        <button onclick="handleConfirm('{{ req.id }}')">Confirm</button>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No new collection requests.</p>
+    {% endif %}
+</div>
 </body>
 </html>

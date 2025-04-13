@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% include 'head.html' %}
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="container">
+        <!-- Sidebar (same as myprofile.html) -->
+        <aside class="sidebar">
+            <div class="profile">
+                <img src="{{ url_for('static', filename='media/profilesample1.jpg') }}" alt="User Profile">
+                <h2>Hi, {{ username }}!</h2>
+            </div>
+            <div class="impact-pts">
+                <span>
+                    <img src="{{ url_for('static', filename='media/recycle.png') }}" alt="Recycle Icon" class="icon">
+                     You've made {{ impact_points }} impact!
+                    <img src="{{ url_for('static', filename='media/recycle.png') }}" alt="Recycle Icon" class="icon">
+                </span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="{{ url_for('profile') }}">Edit Profile</a></li>
+                <li><a href="{{ url_for('donations') }}">Donations</a></li>
+                <li><a href="{{ url_for('collections') }}">Collections</a></li>
+                <li><a href="{{ url_for('impact') }}" class="active">Impact</a></li>
+                <li><a href="{{ url_for('connections') }}">Connections</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content Section (same as myprofile.html) -->
+        <div class="content-container">
+            <div class="impact-section">
+                <h2 class="page-title">Conversion Details</h2>
+
+                <div class="request-card">
+                    <div class="request-info">
+                        <p><strong>{{ conversion.waste_item }}</strong> was converted into <em>{{ conversion.product }}</em></p>
+                        <p class="timestamp">Converted on: {{ conversion.time }}</p>
+                        <p class="description"><strong>Description:</strong> {{ conversion.description }}</p>
+                    </div>
+
+                    <div class="request-actions">
+                        <!-- Back Button that takes you to the Impact page with correct styles -->
+                        <a href="{{ url_for('impact') }}">
+                            <button>Back to Impact</button>
+                        </a>
+<!-- Edit Conversion Button -->
+<button type="submit" id="edit-button">Edit</button>
+                        <!-- Delete Conversion Form -->
+                        <form action="{{ url_for('delete_conversion', conversion_id=conversion.id) }}" method="POST" style="display:inline;">
+    <button type="submit" id="button-danger" onclick="return confirm('Are you sure you want to delete this conversion?')">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% include 'footer.html' %}
+</body>
+</html>

@@ -3,10 +3,50 @@
     {% include 'head.html' %}
 <body>
     {% include 'navbar.html' %}
-discover here
+{% block content %}
+<div class="donation-section">
+    <h2 class="page-title">Discover and Collect Donations</h2>
 
-    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
-    {% include 'footer.html' %}
+ <div class="donation-search">
+    <form method="GET" action="{{ url_for('discover') }}" class="filter-form">
+        <input type="text" name="search" placeholder="Search..." value="{{ search }}" class="search-input">
+        <select name="category" class="category-select">
+            <option value="">All Categories</option>
+            <option value="Plastic" {% if category == 'plastic' %}selected{% endif %}>Plastic</option>
+            <option value="Metal" {% if category == 'metal' %}selected{% endif %}>Metal</option>
+            <option value="Paper" {% if category == 'paper' %}selected{% endif %}>Paper</option>
+<option value="Glass" {% if category == 'glass' %}selected{% endif %}>Glass</option>
+
+        </select>
+
+        <button type="submit">Filter</button>
+    </form>
+</div>
+
+    <ul class="donation-list">
+        {% for post in posts %}
+        <li class="donation-card">
+            <h3>{{ post.title }}</h3>
+            <p><strong>Category:</strong> {{ post.category }}</p>
+            <p>{{ post.description }}</p>
+<p><strong>Uploaded by:</strong> {{ post.username }} from {{ post.location }}</p>
+
+<div class="donation-actions">
+<a href="{{ url_for('view_donation', post_id=post.id) }}" class="view-btn">View</a>
+
+            <form action="{{ url_for('request_collection', post_id=post.id) }}" method="POST">
+                <button type="submit" class="request-btn">Request to Collect</button>
+            </form>
+</div>
+<p class="post-date">{{ post.date_posted }}</p>
+        </li>
+        {% else %}
+        <p>No posts found matching your criteria.</p>
+        {% endfor %}
+    </ul>
+</div>
+{% include 'footer.html' %}
+{% endblock %}
 </body>
 </html>
 </body>
