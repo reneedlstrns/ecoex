@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% include 'head.html' %}
+<body>
+    {% include 'navbar.html' %}
+<h2>Login to EcoExchange</h2>
+    <form action="/login" method="POST">
+        <label for="email">Email:</label>
+        <input type="email" name="email" required>
+
+        <label for="password">Password:</label>
+        <input type="password" name="password" required>
+
+        <button type="submit">Login</button>
+    </form>
+
+
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+    {% include 'footer.html' %}
+</body>
+</html>
+</body>
+</html>

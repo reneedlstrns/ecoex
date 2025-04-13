@@ -1,0 +1,19 @@
+<header>
+    <img src="{{ url_for('static', filename='media/logo3.png') }}" alt="EcoExchange Logo" class="logo">
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('index') }}">Home</a></li>
+            <li><a href="{{ url_for('myprofile') }}">My Profile</a></li>
+            <li><a href="{{ url_for('discover') }}">Discover & Collect</a></li>
+            <li><a href="{{ url_for('hub') }}">Hub</a></li>
+        </ul>
+        <div class="auth-buttons">
+            <a href="/login">
+            <button class="login" id="login-btn">Log In</button>
+            </a>
+            <button class="donate" id="donate-btn">DONATE</button>
+        </div>
+    </nav>
+    {% include 'donate.html' %}
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</header>

@@ -1,0 +1,29 @@
+<span class="close">&times;</span>
+<h2>Donate an Item</h2>
+<form action="/donate" method="POST">
+    <label for="post_title">Title:</label>
+    <input type="text" id="post_title" name="post_title" required>
+
+   <label for="item_id">Select Item:</label>
+<select name="item_id" id="itemDropdown" required>
+    {% for item in items %}
+    <option value="{{ item['item_id'] }}" data-description="{{ item['description'] }}" data-score="{{ item['score'] }}">
+        {{ item['item_name'] }}
+    </option>
+    {% endfor %}
+</select>
+
+<p><strong>Description:</strong> <span id="itemDescription">Select an item to see its description.</span></p>
+<p><strong>Score:</strong> <span id="itemScore">Select an item to see its score.</span></p>
+
+
+    <label for="quantity">Quantity:</label>
+    <input type="number" id="quantity" name="quantity" required>
+
+    <label for="pick_up_location">Pick-up Location:</label>
+    <input type="text" id="pick_up_location" name="pick_up_location" required>
+
+    <label for="description">Description:</label>
+    <textarea id="description" name="description" required></textarea>
+    <button type="submit">Donate Now</button>
+</form>

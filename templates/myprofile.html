@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+    {% include 'head.html' %}
+<body>
+    {% include 'navbar.html' %}
+
+    <div class="container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="profile">
+                <img src="{{ url_for('static', filename='media/profilesample1.jpg') }}" alt="User Profile">
+                <h2>Hi, {{session['fname']}}!</h2>
+            </div>
+            <div class="impact-pts">
+                <span>
+                    <img src="{{ url_for('static', filename='media/recycle.png') }}" alt="Recycle Icon" class="icon">
+                    You've made {{ total_score }} impact!
+                    <img src="{{ url_for('static', filename='media/recycle.png') }}" alt="Recycle Icon" class="icon">
+                </span>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#" data-content="editprofile">Edit Profile</a></li>
+                <li><a href="#" data-content="donations">Donations</a></li>
+                <li><a href="#" data-content="collections">Collections</a></li>
+                <li><a href="#" data-content="impact">Impact</a></li>
+                <li><a href="#" data-content="connections">Connections</a></li>
+            </ul>
+        </aside>
+
+        <!-- Main Content Section (Only One Section Visible at a Time) -->
+        <div class="content-container">
+            <div id="editprofile" class="content-section" style="display: none;">{% include 'editprofile.html' %}</div>
+            <div id="donations" class="content-section" style="display: none;">{% include 'donations.html' %}</div>
+            <div id="collections" class="content-section" style="display: none;">{% include 'collections.html' %}</div>
+            <div id="impact" class="content-section" style="display: none;">{% include 'impact.html' %}</div>
+            <div id="connections" class="content-section" style="display: none;">{% include 'connections.html' %}</div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+    {% include 'footer.html' %}
+</body>
+</html>

@@ -1,0 +1,379 @@
+/* General Styles */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    padding-bottom: 0px;
+    padding-top: 95px;
+    overflow-x: hidden;
+    height: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: "Nunito", sans-serif;
+    background-color: #f6f6f6;
+}
+
+/* Header */
+header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 98%;
+    padding: 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    background-color: #006d57;
+    border-top-left-radius: 15px;
+    border-top-right-radius: 15px;
+    overflow: hidden;
+}
+
+.logo {
+    height: 55px;
+    width: auto;
+    margin-right: 20px;
+}
+
+nav {
+    display: flex;
+    align-items: center;
+    width: 90%;
+    justify-content: space-between;
+}
+
+nav ul {
+    list-style: none;
+    display: flex;
+    gap: 20px;
+    margin: 0;
+    padding: 0;
+}
+
+nav ul li {
+    display: inline-block;
+}
+
+nav ul li a {
+    text-decoration: none;
+    color: #ffffff;
+    font-family: "Nunito", sans-serif;
+}
+
+nav ul li:hover {
+    font-weight: bold;
+}
+
+/* Nav Bar Buttons */
+.auth-buttons {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 10px;
+    flex-shrink: 0; 
+    justify-content: flex-start;
+    padding-right: 25px;
+}
+
+.auth-buttons button {
+    padding: 5px 5px;
+    font-size: 1rem;
+    border: none;
+    cursor: pointer;
+    min-width: 100px;
+}
+
+.login {
+    background-color: transparent;
+    border: 1px solid black;
+    font-family: "Nunito", sans-serif;
+    color: #ffffff;
+}
+
+.login:hover {
+    font-weight: bold;
+}
+
+.donate {
+    background-color: #ffffff;
+    color: #006d57;
+    border-radius: 5px;
+    font-family: "Nunito", sans-serif;
+}
+
+.donate:hover {
+    font-weight: bold;
+    border: 2px solid #B2BC39;
+}
+
+/*  Main Page */
+/* Slider Section */
+.slider {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center; 
+    overflow: hidden;
+}
+
+.slides {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    transition: transform 0.5s ease-in-out;
+}
+
+.slide {
+    position: relative;
+    min-width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.slide img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Slide Content Overlay */
+.slide-content {
+    position: absolute;
+    top: 50%;
+    right: 10%;
+    transform: translateY(-50%);
+    color: white;
+    max-width: 40%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+/* Title & Description */
+.slide-content h2 {
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+.slide-content .description {
+    font-size: 1rem;
+    margin-bottom: 20px;
+}
+
+/* Navigation Buttons */
+button.prev, button.next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    z-index: 99;
+    background: transparent;
+
+}
+
+.prev {
+    left: 10px;
+}
+
+.next {
+    right: 10px;
+}
+
+/* Footer */
+footer {
+    bottom: 0;
+    width: 100%;
+    color: #006d57;
+    text-align: center;
+    padding: 20px;
+}
+
+/* Container Setup */
+.container {
+    display: flex;
+    justify-content: center; 
+    align-items: center; 
+    height: 100vh; 
+}
+
+/* Sidebar */
+.sidebar {
+    position: absolute;
+    left: 30px;
+    top: 60%;
+    transform: translateY(-50%);
+    width: 260px;
+    color: #006d57;
+    background: #f3f4e7;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 15px;
+    height: fit-content;
+}
+
+/* Profile Section */
+.profile img {
+    width: 170px;
+    height: 170px;
+    border-radius: 50%; 
+    object-fit: cover;
+    margin-bottom: 5px;
+    border: 3px solid #006d57; /* Adds a visible border */
+    padding: 7px; /* Creates space between the border and the image */
+    background-color: #f3f4e7;
+}
+
+.icon {
+    width: 1em; /* Matches text size */
+    height: 1em;
+    vertical-align: middle; /* Ensures proper alignment */
+    object-fit: contain;
+    display: inline-block; /* Keeps it inline with the text */
+}
+
+/* Sidebar Menu */
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+}
+
+.sidebar-menu li {
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.sidebar-menu li a {
+    text-decoration: none;
+    color: white;
+    display: block;
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 5px;
+    background-color: #004d40;
+}
+
+.sidebar-menu li a:hover {
+    font-weight: bold;
+}
+
+.sidebar-menu li a.active {
+    border: 2px solid #B2BC39; 
+    background-color: #004d40;
+}
+
+
+.content-container {
+    width: 260px; 
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 40px;
+    border-radius: 10px;
+    height: fit-content; 
+    margin-left: 20px; 
+}
+
+
+.content-section {
+    display: none; 
+}
+
+#profile {
+    display: block; 
+}
+
+/* Modal Overlay */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    opacity: 0; /* Initially invisible */
+    transition: opacity 0.4s ease-in-out; /* Smooth fade-in effect */
+    overflow-y: auto;
+}
+
+/* Modal Content */
+.modal-content {
+    background: white;
+    padding: 30px;
+    width: 40%;
+    margin: 10% auto;
+    border-radius: 15px;
+    box-shadow: 0px 6px 8px rgba(0, 0, 0, 0.15);
+    text-align: center;
+    transform: translateY(-30px); /* Start slightly above */
+    transition: transform 0.4s ease-in-out, opacity 0.4s ease-in-out;
+}
+
+/* Active Modal */
+.modal.show {
+    display: block;
+    opacity: 1; /* Become visible */
+    transform: translateY(0); /* Move to normal position */
+}
+
+/* Close Button */
+.close {
+    float: right;
+    font-size: 24px;
+    cursor: pointer;
+}
+
+/* Headings */
+h2 {
+    margin-bottom: 20px;
+    font-family: "Nunito", sans-serif;
+}
+
+/* Form Elements */
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Labels */
+label {
+    margin-top: 5px;
+    display: block;
+    text-align: left;
+}
+
+/* Input & Textarea */
+input, textarea {
+    width: 95%;
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    alignment: center;
+}
+
+/* Submit Button */
+button {
+    background-color: #ff4b4b;
+    color: white;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease-in-out; /* Smooth hover effect */
+}
