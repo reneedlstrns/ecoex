@@ -25,10 +25,59 @@ def register_routes(app):
                 return render_template("login.html", error_message=error_message), 401
         return render_template("login.html")
 
+
     @app.route("/logout")
     def logout():
         session.pop('user_email', None)
         return redirect(url_for('index'))
+
+
+    @app.route("/register", methods=["GET", "POST"])
+    def registration():
+        if request.method == 'POST':
+            data = request.form
+            nick_name = data.get('nick_name')
+            fname = data.get('fname')
+            lname = data.get('lname')
+            mobile = data.get('mobile')
+            location_title = data.get('location_title')
+            address = data.get('address')
+            city = data.get('city')
+            company = data.get('company')
+            email = data.get('email')
+            password = data.get('password')
+            confirm_password = data.get('confirmPassword')
+
+            if not nick_name or not fname or not lname or not mobile or not location_title or not address or not city or not email or not password or not confirm_password:
+                return render_template("register.html", success=False,
+                                       message=message_helper.ERROR_FILL_ALL_REQUIRED_FIELDS)
+
+            if not user_service.is_valid_email(email):
+                return render_template("register.html", success=False,
+                                       message=message_helper.ERROR_INVALID_EMAIL_FORMAT)
+
+            if not user_service.is_valid_password(password) or not user_service.is_valid_password(confirm_password):
+                return render_template("register.html", success=False,
+                                       message=message_helper.ERROR_DOES_NOT_MEET_PASSWORD_REQUIREMENTS)
+
+            if password != confirm_password:
+                return render_template("register.html", success=False, message=message_helper.ERROR_PASSWORD_MISMATCH)
+
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                return render_template("register.html", success=False,
+                                       message=message_helper.ERROR_EMAIL_ALREADY_EXISTS)
+
+            response = user_service.create_user(nick_name, fname, lname, mobile, location_title, address, city, company,
+                                                email, password)
+            if 'error' in response:
+                return render_template("register.html", success=False, message=response['error'])
+
+            return render_template("register.html", success=True,
+                                   message=message_helper.SUCCESS_USER_CREATED)
+
+        return render_template("register.html", success=False, message='')
+
 
     @app.route("/resetPassword", methods=["GET", "POST"])
     def reset_password():
@@ -75,6 +124,7 @@ def register_routes(app):
                                        message=message_helper.SUCCESS_PASSWORD_RESET)
 
         return render_template("reset.html", success=False, message='')
+
 
     @app.route('/api/create_user', methods=['POST'])
     def api_create_user():
