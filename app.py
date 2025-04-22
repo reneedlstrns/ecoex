@@ -174,7 +174,7 @@ def register_routes(app):
 
     @app.route("/myprofile")
     def myprofile():
-        if 'user_email' and 'user_id' in session:
+        if 'user_email' in session:
             user = get_user_by_email(session['user_email'])
 
             conn = get_db_connection()

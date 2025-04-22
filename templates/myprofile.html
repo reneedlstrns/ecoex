@@ -9,7 +9,13 @@
         <aside class="sidebar">
             <div class="profile">
                 <img src="{{ url_for('static', filename='media/profilesample1.jpg') }}" alt="User Profile">
-                <h2>Hi, {{session['fname']}}!</h2>
+                <h2>
+                    {% if user %}
+                        Hi, {{ user.nick_name }}!
+                    {% else %}
+                        Hi, Guest!
+                    {% endif %}
+                </h2>
             </div>
             <div class="impact-pts">
                 <span>
