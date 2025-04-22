@@ -1,0 +1,75 @@
+/* login.css */
+
+.container {
+    margin-top: -150px; /* Adjust this value to move the form higher */
+    margin-left: 20px; /* Add left margin */
+    margin-right: 20px; /* Add right margin */
+    padding: 20px; /* Add padding around the container */
+}
+
+/* Align labels and input fields inline and vertically aligned */
+form .form-group {
+    display: flex;
+    align-items: center; /* Vertically align labels and inputs */
+    margin-bottom: 20px; /* Add spacing between form groups */
+}
+
+form .form-group label {
+    font-weight: bold;
+    margin-right: 10px; /* Add spacing between label and input */
+}
+
+form .form-group input {
+    flex: 1; /* Ensure both input fields take up the same width */
+    box-sizing: border-box; /* Include padding and border in the element's total width */
+    text-align: left; /* Ensure text inside input is left-aligned */
+    height: 40px; /* Set a consistent height for the input fields */
+}
+
+/* Style the login button */
+form .btn {
+    background-color: black; /* Set button color to black */
+    color: white; /* Set text color to white for contrast */
+    width: 100%; /* Make the button span the width of the form group */
+    padding: 10px; /* Add padding for better appearance */
+    border: none; /* Remove border */
+    border-radius: 5px; /* Optional: Add rounded corners */
+    font-size: 16px; /* Adjust font size */
+    cursor: pointer; /* Change cursor to pointer on hover */
+}
+
+/* Set the login form background to white */
+.card {
+    background-color: white; /* Set background color to white */
+    border: 1px solid #ddd; /* Optional: Add a light border for better visibility */
+    border-radius: 5px; /* Optional: Add rounded corners */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Optional: Add a subtle shadow for depth */
+    margin: 20px; /* Add margin around the card */
+    padding: 30px; /* Add padding inside the card */
+}
+
+#errorModal {
+    display: none; /* Initially hidden */
+    position: fixed; /* Stay in place */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5); /* Add a semi-transparent background */
+    z-index: 1000; /* Ensure it appears above other elements */
+
+    display: flex; /* Use flexbox for centering */
+    justify-content: center; /* Center horizontally */
+    align-items: flex-start; /* Align to the top */
+}
+
+#errorModal .modal-content {
+    background-color: white; /* Modal background */
+    padding: 20px; /* Add padding inside the modal */
+    border-radius: 10px; /* Optional: Rounded corners */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* Add a shadow for depth */
+    max-width: 500px; /* Set a max width for the modal */
+    width: 90%; /* Make it responsive */
+    text-align: center; /* Center the text inside the modal */
+    margin-top: 400px; /* Adjust this value to move the modal lower */
+}

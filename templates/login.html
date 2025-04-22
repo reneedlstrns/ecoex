@@ -1,23 +1,79 @@
 <!DOCTYPE html>
 <html lang="en">
     {% include 'head.html' %}
+<head>
+    <link rel="stylesheet" href="/static/css/login.css">
+</head>
 <body>
     {% include 'navbar.html' %}
-<h2>Login to EcoExchange</h2>
-    <form action="/login" method="POST">
-        <label for="email">Email:</label>
-        <input type="email" name="email" required>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h1 class="text-white text-center">Login to <span class="EcoExchange">EcoExchange</span></h1>
+            <div class="card mt-3">
+                <div class="card-body">
+                    <form id="registrationForm" action="/login" method="POST">
+                        <div class="form-group">
+                            <label for="email">
+                                Email&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                            </label>
+                            <input type="email"
+                                   class="form-control"
+                                   id="email"
+                                   name="email"
+                                   placeholder="Email" required/>
+                        </div>
+                        <div class="form-group">
+                            <label for="password">
+                                Password
+                            </label>
+                            <input type="password"
+                                   class="form-control"
+                                   id="password"
+                                   name="password"
+                                   placeholder="Password"
+                                   required/>
+                        </div>
+                        <button class="btn btn-black btn-block">
+                            Login
+                        </button>
+                    </form>
+                    <p class="mt-3 text-left">
+                        Not registered?
+                        <a href="/register">Create an account</a>
+                    </p>
+                    <p class="mt-3 text-left">
+                        Forgot your password?
+                        <a href="/resetPassword">Reset?</a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
-        <label for="password">Password:</label>
-        <input type="password" name="password" required>
+    <!-- Modal -->
+    <div id="errorModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p>{{ error_message }}</p>
+        </div>
+    </div>
 
-        <button type="submit">Login</button>
-    </form>
+    <script>
+        // Show the modal if there's an error message
+        const errorMessage = "{{ error_message|safe }}";
+        if (errorMessage) {
+            document.getElementById('errorModal').style.display = 'block';
+        }
 
+        // Close the modal
+        function closeModal() {
+            document.getElementById('errorModal').style.display = 'none';
+        }
+    </script>
 
     <script src="{{ url_for('static', filename='script.js') }}" defer></script>
     {% include 'footer.html' %}
-</body>
-</html>
 </body>
 </html>
