@@ -3,11 +3,237 @@ import logging
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from datetime import datetime
 from extensions import bcrypt, db
-from models import user
 from models.user import User
 from services import user_service
 from services.user_service import validate_user, get_user_by_email, create_user
 from utils import message_helper
+
+
+def register_routes(app):
+    @app.route("/login", methods=["GET", "POST"])
+    def login():
+        if request.method == 'POST':
+            email = request.form['email']
+            password = request.form['password']
+            if validate_user(email, password):
+                user_data = get_user_by_email(email)
+                session['user_email'] = email
+                session['user_id'] = user_data['user_id']
+                return redirect(url_for('myprofile'))
+            else:
+                error_message = message_helper.ERROR_INVALID_USERNAME_OR_PASSWORD
+                return render_template("login.html", error_message=error_message), 401
+        return render_template("login.html")
+
+    @app.route("/logout")
+    def logout():
+        session.pop('user_email', None)
+        return redirect(url_for('index'))
+
+    @app.route('/api/create_user', methods=['POST'])
+    def api_create_user():
+        """
+            Endpoint to create a user
+            """
+        try:
+            data = request.get_json()
+            nick_name = data.get('nick_name')
+            fname = data.get('first_name')
+            lname = data.get('last_name')
+            mobile = data.get('mobile')
+            location_title = data.get('location_title')
+            address = data.get('address')
+            city = data.get('city')
+            company = data.get('company')
+            email = data.get('email')
+            password = data.get('password')
+            confirm_password = data.get('confirmPassword')
+
+            if not all([nick_name, fname, lname, mobile, location_title, address, city, company, email, password,
+                        confirm_password]):
+                return jsonify({'error': message_helper.ERROR_FILL_ALL_REQUIRED_FIELDS}), 400
+
+            if password != confirm_password:
+                return jsonify({'error': message_helper.ERROR_PASSWORD_MISMATCH}), 400
+
+            existing_user = User.query.filter_by(email=email).first()
+            if existing_user:
+                return jsonify({'error': message_helper.ERROR_EMAIL_ALREADY_EXISTS}), 400
+
+            user = user_service.create_user(nick_name, fname, lname, mobile, location_title, address, city, company,
+                                            email,
+                                            password)
+            return jsonify(user)
+        except Exception as e:
+            logging.error(f"Error creating user: {e}")
+            return jsonify({'error': str(e)}), 500
+
+    @app.route('/')
+    def index():
+        return render_template('index.html')
+
+    @app.route('/editprofile')
+    def edit_profile():
+        return render_template('editprofile.html')
+
+    @app.route("/myprofile")
+    def myprofile():
+        if 'user_email' and 'user_id' in session:
+            user = get_user_by_email(session['user_email'])
+
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            cursor.execute(
+                "SELECT postings_id, donor_user_id, post_title, quantity, pick_up_location, description, post_status, collector_by_user_id FROM postings")
+            donations = cursor.fetchall()
+
+            cursor.execute("SELECT COALESCE(SUM(score), 0) AS total_score FROM postings WHERE donor_user_id = ?",
+                           (session["user_id"],))
+            total_score = cursor.fetchone()["total_score"]
+
+            conn.close()
+
+            return render_template("myprofile.html", donations=donations, total_score=total_score, user=user)
+        else:
+            return redirect(url_for('login'))
+
+    @app.route("/donations")
+    def donations():
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute(
+            "SELECT post_id, donor_user_id, post_title, quantity, pick_up_location, description, post_status, collected_by_user_id FROM postings")
+        donations = cursor.fetchall()
+
+        conn.close()
+
+        return render_template("donations.html", donations=donations)
+
+    @app.route('/collections')
+    def collections():
+        return render_template('collections.html')
+
+    @app.route('/impact')
+    def impact():
+        return render_template('impact.html', conversions=conversions)
+
+    @app.route('/connections')
+    def connections():
+        return render_template('connections.html', requests=requests)
+
+    @app.route('/hub')
+    def hub():
+        return render_template('hub.html')
+
+    @app.route("/donate", methods=["GET", "POST"])
+    def donate():
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT item_id, item_name, description, score FROM items")
+        items = cursor.fetchall()
+
+        if request.method == "POST":
+            title = request.form["post_title"]
+            quantity = int(request.form["quantity"])
+            pick_up_location = request.form["pick_up_location"]
+            description = request.form["description"]
+            item_id = request.form["item_id"]
+            post_date = datetime.today().strftime('%Y-%m-%d')
+
+            # Check for an existing similar donation
+            cursor.execute(
+                "SELECT * FROM postings WHERE donor_user_id = ? AND item_id = ? AND quantity = ? AND pick_up_location = ? AND post_date = ?",
+                (session["user_id"], item_id, quantity, pick_up_location, post_date))
+            existing_post = cursor.fetchone()
+
+            if existing_post:
+                return "❌ Error: A similar donation already exists!", 400
+
+            # Fetch item score for calculation
+            cursor.execute("SELECT score FROM items WHERE item_id = ?", (item_id,))
+            item_score = cursor.fetchone()[0]
+            calculated_score = quantity * item_score
+
+            # Insert new donation into `postings` table
+            cursor.execute(
+                "INSERT INTO postings (donor_user_id, post_title, quantity, pick_up_location, description, post_status, post_date, item_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (session["user_id"], title, quantity, pick_up_location, description, "new", post_date, item_id))
+
+            new_posting_id = cursor.lastrowid  # Get the inserted posting ID
+
+            # Insert into `postings_audit` table
+            cursor.execute(
+                "INSERT INTO postings_audit (post_id, posted_by_user_id, post_status, post_title, post_date, item_id, quantity, pick_up_location, transaction_date, change_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (
+                    new_posting_id, session["user_id"], "new", title, post_date, item_id, quantity, pick_up_location,
+                    post_date,
+                    "User_posted"))
+
+            conn.commit()
+            conn.close()
+
+            return redirect(url_for("myprofile"))  # ✅ Redirect back to profile after successful donation
+
+        conn.close()
+        return render_template("donate_form.html", items=items)  # NEW TEMPLATE
+
+    # IVY CODE:
+    @app.route('/request/<request_id>')
+    def view_request(request_id):
+        req = next((r for r in requests if r['id'] == request_id), None)
+        if req:
+            return render_template('view_request.html', request=req, username="Renee", impact_points=42, )
+        else:
+            return "Request not found", 404
+
+    @app.route('/conversion/<conversion_id>')
+    def view_conversion(conversion_id):
+        conversion = next((c for c in conversions if c['id'] == conversion_id), None)
+        if conversion:
+            return render_template('view_conversion.html', conversion=conversion, username="Renee", impact_points=42, )
+        else:
+            return "Conversion not found", 404
+
+    @app.route('/conversion/<conversion_id>/delete', methods=['POST'])
+    def delete_conversion(conversion_id):
+        global conversions
+        conversions = [c for c in conversions if c['id'] != conversion_id]
+        return redirect(url_for('impact'))
+
+    @app.route('/discover')
+    def discover():
+        search_query = request.args.get('search', '').lower()
+        category = request.args.get('category', '').lower()
+        location = request.args.get('location', '').lower()
+
+        filtered_posts = []
+        for post in donation_posts:
+            matches_search = search_query in post['title'].lower() or search_query in post['description'].lower()
+            matches_category = category in post['category'].lower() if category else True
+
+            if matches_search and matches_category:
+                filtered_posts.append(post)
+
+            return render_template('discover.html', posts=filtered_posts, search=search_query, category=category,
+                                   donation_posts=donation_posts)
+
+    @app.route('/donation/<post_id>')
+    def view_donation(post_id):
+        post = next((p for p in donation_posts if p['id'] == post_id), None)
+        if post:
+            return render_template('view_donation.html', post=post)
+        else:
+            return "Donation post not found", 404
+
+    @app.route('/request-collection/<post_id>', methods=['POST'])
+    def request_collection(post_id):
+        print(f"Collection requested for post: {post_id}")
+        return redirect(url_for('discover'))
 
 
 def create_app():
@@ -22,6 +248,21 @@ def create_app():
 
     # Register routes
     register_routes(app)
+
+    return app
+
+
+app = create_app()
+
+
+# Database Connection
+def get_db_connection():
+    conn = sqlite3.connect("ecoexchange.db")
+    conn.row_factory = sqlite3.Row
+    print("✅ Database connected successfully!")  # Debugging print
+    return conn
+
+
 # IVY CODE:
 # ✅ Global Data (Mock)
 requests = [
@@ -170,263 +411,9 @@ donation_posts = [
         'date_posted': 'March 31, 2025'
     }
 ]
-# Database Connection
-def get_db_connection():
-    conn = sqlite3.connect("ecoexchange.db")
-    conn.row_factory = sqlite3.Row
-    print("✅ Database connected successfully!")  # Debugging print
-    return conn
-
-    return app
-
-
-def register_routes(app):
-    @app.route("/login", methods=["GET", "POST"])
-    def login():
-        if request.method == 'POST':
-            email = request.form['email']
-            password = request.form['password']
-            if validate_user(email, password):
-                user_data = get_user_by_email(email)
-                session['user_email'] = email
-                session['user_id'] = user_data['user_id']
-                return redirect(url_for('myprofile'))
-            else:
-                error_message = message_helper.ERROR_INVALID_USERNAME_OR_PASSWORD
-                return render_template("login.html", error_message=error_message), 401
-        return render_template("login.html")
-
-    @app.route("/logout")
-    def logout():
-        session.pop('user_email', None)
-        return redirect(url_for('index'))
-
-    @app.route('/api/create_user', methods=['POST'])
-    def api_create_user():
-        """
-            Endpoint to create a user
-            """
-        try:
-            data = request.get_json()
-            nick_name = data.get('nick_name')
-            fname = data.get('first_name')
-            lname = data.get('last_name')
-            mobile = data.get('mobile')
-            location_title = data.get('location_title')
-            address = data.get('address')
-            city = data.get('city')
-            company = data.get('company')
-            email = data.get('email')
-            password = data.get('password')
-            confirm_password = data.get('confirmPassword')
-
-            if not all([nick_name, fname, lname, mobile, location_title, address, city, company, email, password,
-                        confirm_password]):
-                return jsonify({'error': message_helper.ERROR_FILL_ALL_REQUIRED_FIELDS}), 400
-
-            if password != confirm_password:
-                return jsonify({'error': message_helper.ERROR_PASSWORD_MISMATCH}), 400
-
-            existing_user = User.query.filter_by(email=email).first()
-            if existing_user:
-                return jsonify({'error': message_helper.ERROR_EMAIL_ALREADY_EXISTS}), 400
-
-            user = user_service.create_user(nick_name, fname, lname, mobile, location_title, address, city, company,
-                                            email,
-                                            password)
-            return jsonify(user)
-        except Exception as e:
-            logging.error(f"Error creating user: {e}")
-            return jsonify({'error': str(e)}), 500
-
-    @app.route('/')
-    def index():
-        return render_template('index.html')
-
-    @app.route('/editprofile')
-    def edit_profile():
-        return render_template('editprofile.html')
-
-    @app.route("/myprofile")
-    def myprofile():
-        if 'user_email' and 'user_id' in session:
-            user = get_user_by_email(session['user_email'])
-
-            conn = get_db_connection()
-            cursor = conn.cursor()
-
-            cursor.execute(
-                "SELECT postings_id, donor_user_id, post_title, quantity, pick_up_location, description, post_status, collector_by_user_id FROM postings")
-            donations = cursor.fetchall()
-
-            cursor.execute("SELECT COALESCE(SUM(score), 0) AS total_score FROM postings WHERE donor_user_id = ?",
-                           (session["user_id"],))
-            total_score = cursor.fetchone()["total_score"]
-
-            conn.close()
-
-            return render_template("myprofile.html", donations=donations, total_score=total_score, user=user)
-        else:
-            return redirect(url_for('login'))
-
-
-    @app.route("/donations")
-    def donations():
-        if "user_id" not in session:
-            return redirect(url_for("login"))
-
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        cursor.execute(
-            "SELECT post_id, donor_user_id, post_title, quantity, pick_up_location, description, post_status, collected_by_user_id FROM postings")
-        donations = cursor.fetchall()
-
-        conn.close()
-
-        return render_template("donations.html", donations=donations)
-
-    @app.route('/collections')
-    def collections():
-        return render_template('collections.html')
-
-@app.route('/impact')
-def impact():
-    return render_template('impact.html', conversions=conversions)
-
-@app.route('/connections')
-def connections():
-    return render_template('connections.html', requests=requests)
-
-    @app.route('/hub')
-    def hub():
-        return render_template('hub.html')
-
-    @app.route("/donate", methods=["GET", "POST"])
-    def donate():
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT item_id, item_name, description, score FROM items")
-        items = cursor.fetchall()
-
-        if request.method == "POST":
-            title = request.form["post_title"]
-            quantity = int(request.form["quantity"])
-            pick_up_location = request.form["pick_up_location"]
-            description = request.form["description"]
-            item_id = request.form["item_id"]
-            post_date = datetime.today().strftime('%Y-%m-%d')
-
-            # Check for an existing similar donation
-            cursor.execute(
-                "SELECT * FROM postings WHERE donor_user_id = ? AND item_id = ? AND quantity = ? AND pick_up_location = ? AND post_date = ?",
-                (session["user_id"], item_id, quantity, pick_up_location, post_date))
-            existing_post = cursor.fetchone()
-
-            if existing_post:
-                return "❌ Error: A similar donation already exists!", 400
-
-            # Fetch item score for calculation
-            cursor.execute("SELECT score FROM items WHERE item_id = ?", (item_id,))
-            item_score = cursor.fetchone()[0]
-            calculated_score = quantity * item_score
-
-            # Insert new donation into `postings` table
-            cursor.execute(
-                "INSERT INTO postings (donor_user_id, post_title, quantity, pick_up_location, description, post_status, post_date, item_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (session["user_id"], title, quantity, pick_up_location, description, "new", post_date, item_id))
-
-            new_posting_id = cursor.lastrowid  # Get the inserted posting ID
-
-            # Insert into `postings_audit` table
-            cursor.execute(
-                "INSERT INTO postings_audit (post_id, posted_by_user_id, post_status, post_title, post_date, item_id, quantity, pick_up_location, transaction_date, change_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                new_posting_id, session["user_id"], "new", title, post_date, item_id, quantity, pick_up_location, post_date,
-                "User_posted"))
-
-            conn.commit()
-            conn.close()
-
-            return redirect(url_for("myprofile"))  # ✅ Redirect back to profile after successful donation
-
-        conn.close()
-        return render_template("donate_form.html", items=items)  # NEW TEMPLATE
-
-
-# Database Connection
-def get_db_connection():
-    conn = sqlite3.connect("ecoexchange.db")
-    conn.row_factory = sqlite3.Row
-    print("✅ Database connected successfully!")  # Debugging print
-    return conn
-
-
-#IVY CODE:
-@app.route('/request/<request_id>')
-def view_request(request_id):
-    req = next((r for r in requests if r['id'] == request_id), None)
-    if req:
-        return render_template('view_request.html', request=req, username="Renee",
-        impact_points=42,)
-    else:
-        return "Request not found", 404
-
-
-@app.route('/conversion/<conversion_id>')
-def view_conversion(conversion_id):
-    # Find the conversion by ID
-    conversion = next((c for c in conversions if c['id'] == conversion_id), None)
-    if conversion:
-        # Render the conversion details (this will be inserted into the dynamic content container)
-        return render_template('view_conversion.html', conversion=conversion, username="Renee",
-        impact_points=42,)
-    else:
-        return "Conversion not found", 404
-
-@app.route('/conversion/<conversion_id>/delete', methods=['POST'])
-def delete_conversion(conversion_id):
-    global conversions
-    conversions = [c for c in conversions if c['id'] != conversion_id]
-    return redirect(url_for('impact'))
-
-
-@app.route('/discover')
-def discover():
-    search_query = request.args.get('search', '').lower()
-    category = request.args.get('category', '').lower()
-    location = request.args.get('location', '').lower()
-
-    filtered_posts = []
-    for post in donation_posts:
-        matches_search = search_query in post['title'].lower() or search_query in post['description'].lower()
-        matches_category = category in post['category'].lower() if category else True
-
-        if matches_search and matches_category:
-            filtered_posts.append(post)
-
-    return render_template('discover.html', posts=filtered_posts, search=search_query, category=category,
-                           donation_posts=donation_posts)
-
-
-@app.route('/donation/<post_id>')
-def view_donation(post_id):
-    post = next((p for p in donation_posts if p['id'] == post_id), None)
-    if post:
-        return render_template('view_donation.html', post=post)
-    else:
-        return "Donation post not found", 404
-
-
-@app.route('/request-collection/<post_id>', methods=['POST'])
-def request_collection(post_id):
-    # You can implement actual logic here (e.g. save the request, update DB, etc.)
-    print(f"Collection requested for post: {post_id}")
-    return redirect(url_for('discover'))
 
 # RUN THE FLASK APP
 if __name__ == "__main__":
-    app = create_app()
     print("✅ Flask app is starting...")
     with app.app_context():
         print(f"✅ SQLAlchemy is using the database connection: {db.engine.url}")
