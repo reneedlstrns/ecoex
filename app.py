@@ -30,6 +30,52 @@ def register_routes(app):
         session.pop('user_email', None)
         return redirect(url_for('index'))
 
+    @app.route("/resetPassword", methods=["GET", "POST"])
+    def reset_password():
+        """
+            Endpoint to reset a user's password
+            """
+        if request.method == 'POST':
+            data = request.form
+            email = data.get('email')
+            existing_password = data.get('existing_password')
+            new_password = data.get('new_password')
+            confirm_password = data.get('confirm_password')
+
+            if not email or not existing_password or not new_password or not confirm_password:
+                return render_template("reset.html", success=False,
+                                       message=message_helper.ERROR_FILL_ALL_REQUIRED_FIELDS)
+
+            valid_new_password = user_service.is_valid_password(new_password)
+            valid_confirm_password = user_service.is_valid_password(confirm_password)
+            if not valid_new_password or not valid_confirm_password:
+                return render_template("reset.html", success=False,
+                                       message=message_helper.ERROR_DOES_NOT_MEET_PASSWORD_REQUIREMENTS)
+
+            if new_password != confirm_password:
+                return render_template("reset.html", success=False,
+                                       message=message_helper.ERROR_PASSWORD_MISMATCH)
+
+            if existing_password == new_password:
+                return render_template("reset.html", success=False,
+                                       message=message_helper.ERROR_CHOOSE_ANOTHER_PASSWORD)
+
+            user = user_service.validate_user(email, existing_password)
+
+            if user is None or user is False:
+                return render_template("reset.html", success=False,
+                                       message=message_helper.ERROR_INVALID_USERNAME_OR_PASSWORD)
+
+            if user is True and new_password == confirm_password:
+                response = user_service.reset_password(email, existing_password, new_password)
+                if 'error' in response:
+                    return render_template("reset.html", success=False, message=response['error'])
+
+                return render_template("reset.html", success=True,
+                                       message=message_helper.SUCCESS_PASSWORD_RESET)
+
+        return render_template("reset.html", success=False, message='')
+
     @app.route('/api/create_user', methods=['POST'])
     def api_create_user():
         """

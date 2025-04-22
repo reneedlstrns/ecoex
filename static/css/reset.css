@@ -1,0 +1,73 @@
+/* reset.css */
+
+html {
+    color-scheme: light dark;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    padding-bottom: 0px;
+    overflow-x: hidden;
+    height: 100%;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    font-family: "Nunito", sans-serif;
+    background-color: #f6f6f6;
+}
+
+
+button[type="submit"] {
+    background-color: black; /* Set button color to black */
+    color: white; /* Set text color to white */
+    border: none; /* Remove border */
+    padding: 10px 20px; /* Add padding for better appearance */
+    border-radius: 5px; /* Optional: Add rounded corners */
+    font-size: 16px; /* Adjust font size */
+    cursor: pointer; /* Change cursor to pointer on hover */
+    width: 100%; /* Make the button span the same width as the text box */
+    margin-top: 20px; /* Add space between the button and the text box */
+    box-sizing: border-box; /* Ensure padding is included in the width */
+}
+
+button[type="submit"]:hover {
+    opacity: 0.9; /* Add a hover effect */
+}
+
+/* Set label font color to black and make text bold */
+form .form-group label {
+    color: black; /* Set label font color to black */
+    font-weight: bold; /* Make labels bold */
+}
+
+
+/* Make the text boxes wider */
+form .form-group input {
+    width: 100%; /* Set the width to 100% of the parent container */
+    box-sizing: border-box; /* Include padding and border in the element's total width */
+    height: 40px; /* Set a consistent height for the input fields */
+    padding: 10px; /* Add padding for better appearance */
+    font-size: 16px; /* Adjust font size for readability */
+}
+
+.reset-password-form {
+    margin-top: -50px; /* Adjust this value to move it higher */
+    position: relative; /* Ensure the position is relative for proper adjustment */
+}
+
+/* Adjust the width of the reset password form */
+.col-md-8 {
+    max-width: 600px; /* Increase the maximum width */
+    width: 100%; /* Ensure it scales properly */
+}
+
+/* Set label font color to black, make text bold, and align left */
+form .form-group label {
+    color: black; /* Set label font color to black */
+    font-weight: bold; /* Make labels bold */
+    text-align: left; /* Align labels to the left */
+    display: block; /* Ensure labels take up the full width */
+}
