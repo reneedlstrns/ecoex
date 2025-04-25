@@ -399,6 +399,13 @@ footer {
     width: 100%;
 }
 
+.highlight {
+    color: #006d57;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
+}
+
 #button-danger {
     background-color: #f44336;
     color: white;
@@ -622,9 +629,11 @@ footer {
     box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05);
     text-align: left;
     transition: box-shadow 0.3s ease;
-    max-width: 1000px;
+    width: 100%;  /* Ensure it takes the full width */
+    max-width: 1200px; /* Matching the container width from the impact page */
     margin-left: auto;
     margin-right: auto;
+    box-sizing: border-box;  /* Ensures padding doesn't affect width */
 }
 
 .donation-item:hover {
@@ -633,13 +642,13 @@ footer {
 
 .donation-item h3 {
     margin-top: 0;
-    font-size: 1.5rem;
+    font-size: 20px;
     color: #006d57;
 }
 
 .donation-item p {
-    font-size: 1rem;
-    margin: 6px 0;
+    font-size: 15;
+    margin: 8px 0;
     color: #333;
 }
 
@@ -662,4 +671,55 @@ footer {
 .donation-item button:disabled {
     background-color: #aaa;
     cursor: not-allowed;
+}
+/* Discover Page - Make the title and search bar sticky */
+.sticky-search {
+    position: sticky;
+    top: 95px; /* below the fixed navbar */
+    z-index: 10;
+    background-color: #f6f6f6; /* match your page background */
+    padding: 15px 0;
+    border-bottom: 1px solid #ccc;
+}
+/* Impact Scroll Wrapper */
+.impact-scroll-wrapper {
+    max-height: 70vh; /* Adjust this based on your header/footer height */
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-top: 20px;
+}
+
+/* Smooth scrolling and hide ugly scrollbar (optional) */
+.impact-scroll-wrapper::-webkit-scrollbar {
+    width: 8px;
+}
+
+.impact-scroll-wrapper::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 10px;
+}
+
+.impact-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
+}
+/* Scrollable Donations List Wrapper */
+.donation-scroll-wrapper {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-top: 20px;
+}
+
+/* Optional: scrollbar styling */
+.donation-scroll-wrapper::-webkit-scrollbar {
+    width: 8px;
+}
+
+.donation-scroll-wrapper::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 10px;
+}
+
+.donation-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
 }

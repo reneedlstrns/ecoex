@@ -181,35 +181,131 @@ def register_routes(app):
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            cursor.execute(
-                "SELECT postings_id, donor_user_id, post_title, quantity, pick_up_location, description, post_status, collector_by_user_id FROM postings")
+            # Donations for the logged-in user
+            cursor.execute("""
+                SELECT postings_id, donor_user_id, post_title, quantity, pick_up_location, description, post_status, collector_by_user_id 
+                FROM postings
+            """)
             donations = cursor.fetchall()
 
-            cursor.execute("SELECT COALESCE(SUM(score), 0) AS total_score FROM postings WHERE donor_user_id = ?",
-                           (session["user_id"],))
+            # Total impact score
+            cursor.execute("""
+                SELECT COALESCE(SUM(score), 0) AS total_score 
+                FROM postings 
+                WHERE donor_user_id = ?
+            """, (session["user_id"],))
             total_score = cursor.fetchone()["total_score"]
+
+            # 💥 Get active connections for the user
+            cursor.execute("""
+                SELECT 
+                    c.donor_user_id,
+                    c.collector_user_id,
+                    c.connection_status,
+                    u1.fname || ' ' || u1.lname AS donor_name,
+                    u2.fname || ' ' || u2.lname AS collector_name,
+                    postings.post_title       
+                FROM connections c
+                JOIN users u1 ON u1.user_id = c.donor_user_id
+                JOIN users u2 ON u2.user_id = c.collector_user_id
+                LEFT JOIN postings ON c.postings_id = postings.postings_id  -- Join with postings to get the post title
+                WHERE c.connection_status = 'Active' AND c.donor_user_id = ?
+            """, (session["user_id"],))
+            connection_rows = cursor.fetchall()
+
+            # ✅ Count total connections where the user is either donor or collector
+            cursor.execute("""
+                SELECT COUNT(*) AS total_connections
+                FROM connections
+                WHERE donor_user_id = ? OR collector_user_id = ?
+            """, (session["user_id"], session["user_id"]))
+            total_connections = cursor.fetchone()["total_connections"]
+
+
+            # 💥 Impact data (for impact.html)
+            cursor.execute("""
+                SELECT 
+                    postings_id, 
+                    post_title, 
+                    post_date, 
+                    pick_up_location, 
+                    score
+                FROM postings
+                WHERE donor_user_id = ? AND is_deleted = 0
+            """, (session['user_id'],))
+            impact_rows = cursor.fetchall()
 
             conn.close()
 
-            return render_template("myprofile.html", donations=donations, total_score=total_score, user=user)
+            # Format connection data
+            requests = [{
+                'donor_name': row['donor_name'],
+                'collector_name': row['collector_name'],
+                'connection_status': row['connection_status'],
+                'post_title': row['post_title']  # Adding the post title here
+            } for row in connection_rows]
+
+
+            # Format impact
+            impact_donations = []
+            total_impact_score = 0
+            for row in impact_rows:
+                impact_donations.append({
+                    'post_title': row['post_title'],
+                    'score': row['score'],
+                    'post_date': row['post_date'],
+                    'pick_up_location': row['pick_up_location']
+                })
+                total_impact_score += row['score']
+
+
+            return render_template(
+                "myprofile.html",
+                user=user,
+                donations=donations,
+                total_score=total_score,
+                requests=requests,  # ✅ this is key!
+                impact_donations=impact_donations,
+                total_impact_score=total_impact_score,
+                total_connections=total_connections
+            )
         else:
             return redirect(url_for('login'))
+
 
     @app.route("/donations")
     def donations():
         if "user_id" not in session:
             return redirect(url_for("login"))
 
+        user_id = session["user_id"]
+
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute(
-            "SELECT post_id, donor_user_id, post_title, quantity, pick_up_location, description, post_status, collected_by_user_id FROM postings")
-        donations = cursor.fetchall()
+        # Only fetch donations posted by the logged-in user
+        cursor.execute("""
+            SELECT 
+                post_id, 
+                donor_user_id, 
+                post_title, 
+                quantity, 
+                pick_up_location, 
+                description, 
+                post_status, 
+                collected_by_user_id 
+            FROM postings 
+            WHERE donor_user_id = ? AND is_deleted = 0
+        """, (user_id,))
 
+        donations = cursor.fetchall()
+        total_postings = len(donations)
+ 
+        print(f"[DEBUG] User ID: {user_id}, Total Donations: {total_postings}")
         conn.close()
 
-        return render_template("donations.html", donations=donations)
+        return render_template("donations.html", donations=donations, total_postings=total_postings)
+
 
     @app.route('/collections')
     def collections():
@@ -218,6 +314,7 @@ def register_routes(app):
     #IVY CODE FOR IMPACT
     @app.route('/impact')
     def impact():
+        print("Impact route hit", flush=True)
         user_id = session['user_id']  # Assuming the user is logged in and their ID is in the session
 
         conn = get_db_connection()
@@ -234,8 +331,10 @@ def register_routes(app):
             FROM postings p
             WHERE p.donor_user_id = ? AND p.is_deleted = 0
         """, (user_id,))
-    
+             
         rows = cursor.fetchall()
+
+        print(f"[DEBUG] Rows fetched from DB: {rows}", flush=True)  # Debug print for raw DB output
 
         # Prepare the donations data for the template
         donations = []
@@ -248,45 +347,55 @@ def register_routes(app):
                 'post_date': row['post_date'],
                 'pick_up_location': row['pick_up_location']
             })
+            print(f"[DEBUG] Donation data being added: {donations[-1]}")  # Debug print
             total_score += row['score']  # Accumulate the score
 
+        print(f"[DEBUG] Total Impact Score: {total_score}")  # Debug print        
         conn.close()
 
         # Pass the donations data to the template
-        return render_template('impact.html', donations=donations)
+        return render_template('impact.html', donations=donations, total_score=total_score)
 
     #IVY CODE FOR CONNECTIONS
     @app.route('/connections')
     def connections():
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Join connections with users and postings to get meaningful display
+        # Query to fetch connections with user names and connection status
         cursor.execute("""
             SELECT 
-                c.rowid AS id,
-                u.fname || ' ' || u.lname AS sender_name,
-                p.post_title AS item_name,
-                p.post_date AS time
+                c.donor_user_id,
+                c.collector_user_id,
+                c.connection_status,
+                u1.fname || ' ' || u1.lname AS donor_name,
+                u2.fname || ' ' || u2.lname AS collector_name
             FROM connections c
-            JOIN users u ON u.user_id = c.collector_user_id
-            JOIN postings p ON p.donor_user_id = c.donor_user_id
+            JOIN users u1 ON u1.user_id = c.donor_user_id
+            JOIN users u2 ON u2.user_id = c.collector_user_id
             WHERE c.connection_status = 'Active'
         """)
 
         rows = cursor.fetchall()
-        print("🪵 Connections query result:", rows) 
+        print("[DEBUG] Raw rows from DB:")
+        for row in rows:
+            print(dict(row))  # 👈 print each row as a dictionary    
+
         conn.close()
 
+        # Prepare the data to be passed to the template
         requests = []
         for row in rows:
             requests.append({
-                'id': row['id'],
-                'sender_name': row['sender_name'],
-                'item_name': row['item_name'],
-                'time': row['time']
+                'donor_name': row['donor_name'],
+                'collector_name': row['collector_name'],
+                'connection_status': row['connection_status']
             })
-
+        print("[DEBUG] Requests to be passed to template:", requests)
+        # Pass the data to the template
         return render_template('connections.html', requests=requests)
 
 
@@ -417,6 +526,15 @@ def register_routes(app):
         cursor.execute(query, filters)
         posts = cursor.fetchall()
 
+        # Total number of active, non-deleted postings (matching the same filters as shown)
+        cursor.execute("""
+            SELECT COUNT(*) AS total_postings 
+            FROM postings 
+            WHERE post_status = 'New' AND is_deleted = 0
+        """)
+        total_postings = cursor.fetchone()['total_postings']
+
+
         # Close the connection
         conn.close()
 
@@ -438,7 +556,7 @@ def register_routes(app):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # AJAX request
             return jsonify({'posts': posts_list})
         else:
-            return render_template('discover.html', posts=posts_list, search=search_query, location=location)
+            return render_template('discover.html', posts=posts_list, search=search_query, location=location, total_postings=total_postings)
 
 
 

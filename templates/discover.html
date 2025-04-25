@@ -5,17 +5,20 @@
     {% include 'navbar.html' %}
 {% block content %}
 <div class="donation-section">
-    <h2 class="page-title">Discover and Collect Donations</h2>
+    <div class="sticky-search">
+        <h2 class="page-title">Discover and Collect Donations</h2>
+        <p class="highlight">There are {{ total_postings }} donations to choose from!</p>
+        <br>
 
-    <div class="donation-search">
-        <form method="GET" action="{{ url_for('discover') }}" class="filter-form" id="searchForm">
-            <input type="text" name="search" placeholder="Search..." value="{{ search }}" class="search-input" id="searchInput">
-            <input type="text" name="location" placeholder="Location..." value="{{ location }}" class="location-input" id="locationInput">
+        <div class="donation-search">
+            <form method="GET" action="{{ url_for('discover') }}" class="filter-form" id="searchForm">
+                <input type="text" name="search" placeholder="Search..." value="{{ search }}" class="search-input" id="searchInput">
+                <input type="text" name="location" placeholder="Location..." value="{{ location }}" class="location-input" id="locationInput">
 
-            <button type="submit">Filter</button>
-        </form>
+                <button type="submit">Filter</button>
+            </form>
+        </div>
     </div>
-
     <ul class="donation-list" id="donationList">
         {% if posts and posts|length > 0 %}
             {% for post in posts %}

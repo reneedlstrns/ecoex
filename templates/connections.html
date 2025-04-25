@@ -2,33 +2,33 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Active Connections</title>
 </head>
 <body>
 <div class="connections-section">
     <h2 class="page-title">Connections</h2>
+    <p class="highlight">You have a total of {{ total_connections }} connections.</p>
 
     {% if requests %}
-        <ul class="request-list">
-            {% for req in requests %}
-                <li class="request-card">
-                    <div class="request-info">
-                        <p><strong>{{ req.sender_name }}</strong> has requested to collect your donation: <em>{{ req.item_name }}</em></p>
-                        <p class="timestamp">{{ req.time }}</p>
-                    </div>
-                    <div class="request-actions">
-                        <a href="{{ url_for('view_request', request_id=req.id) }}">
-                                <button>View</button>
-                            </a>
-
-                        <button onclick="handleDeny('{{ req.id }}')">Deny</button>
-                        <button onclick="handleConfirm('{{ req.id }}')">Confirm</button>
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
+        <div class="impact-scroll-wrapper">
+            <ul class="request-list">
+                {% for req in requests %}
+                    <li class="request-card">
+                        <div class="connection-info">
+                            <p><strong>{{ req.collector_name }}</strong> wants to collect your <strong>{{ req.post_title }}</strong></p>
+                            <p>Status: <em>{{ req.connection_status }}</em></p>
+                        </div>
+                        <div class="request-actions">
+                            <button onclick="handleDeny('{{ req.donor_name }}', '{{ req.collector_name }}')">Deny</button>
+                            <button onclick="handleConfirm('{{ req.donor_name }}', '{{ req.collector_name }}')">Confirm</button>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>    
+        
     {% else %}
-        <p>No new collection requests.</p>
+            <p>No active connections.</p>
     {% endif %}
 </div>
 </body>

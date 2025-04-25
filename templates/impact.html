@@ -8,20 +8,23 @@
 <body>
 
     <div class="impact-section">
-        <h2 class="page-title">Your Impact Score {{ total_score }}</h2>
+        <h2 class="page-title">Impact</h2>
+        <p class="highlight">You have gained a total impact score of {{ total_score }}.</p>
 
         
         {% if donations %}
-            <ul class="donation-list">
-                {% for donation in donations %}
-                    <li class="donation-card">
-                        <h3 class="donation-title">{{ donation.post_title }}</h3>
-                        <p><strong>Posted on:</strong> {{ donation.post_date }}</p>
-                        <p><strong>Location:</strong> {{ donation.pick_up_location }}</p>
-                        <p><strong>Score Earned:</strong> {{ donation.score }}</p>
-                    </li>
-                {% endfor %}
-            </ul>
+            <div class="impact-scroll-wrapper">
+                <ul class="donation-list">
+                    {% for donation in donations %}
+                        <li class="donation-card">
+                            <h3 class="donation-title">{{ donation.post_title }}</h3>
+                            <p><strong>Posted on:</strong> {{ donation.post_date }}</p>
+                            <p><strong>Location:</strong> {{ donation.pick_up_location }}</p>
+                            <p><strong>Score Earned:</strong> {{ donation.score }}</p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
         {% else %}
             <p class="no-donations">No donations have been made yet.</p>
         {% endif %}
