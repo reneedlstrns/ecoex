@@ -213,14 +213,81 @@ def register_routes(app):
     @app.route('/collections')
     def collections():
         return render_template('collections.html')
-
+    
+    #IVY CODE FOR IMPACT
     @app.route('/impact')
     def impact():
-        return render_template('impact.html', conversions=conversions)
+        user_id = session['user_id']  # Assuming the user is logged in and their ID is in the session
 
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Query to fetch the donations posted by the user, including the score for each donation
+        cursor.execute("""
+            SELECT 
+                p.postings_id, 
+                p.post_title, 
+                p.post_date, 
+                p.pick_up_location, 
+                p.score
+            FROM postings p
+            WHERE p.donor_user_id = ? AND p.is_deleted = 0
+        """, (user_id,))
+    
+        rows = cursor.fetchall()
+
+        # Prepare the donations data for the template
+        donations = []
+        total_score = 0  # Initialize total_score
+
+        for row in rows:
+            donations.append({
+                'post_title': row['post_title'],
+                'score': row['score'],
+                'post_date': row['post_date'],
+                'pick_up_location': row['pick_up_location']
+            })
+            total_score += row['score']  # Accumulate the score
+
+        conn.close()
+
+        # Pass the donations data to the template
+        return render_template('impact.html', donations=donations)
+
+    #IVY CODE FOR CONNECTIONS
     @app.route('/connections')
     def connections():
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Join connections with users and postings to get meaningful display
+        cursor.execute("""
+            SELECT 
+                c.rowid AS id,
+                u.fname || ' ' || u.lname AS sender_name,
+                p.post_title AS item_name,
+                p.post_date AS time
+            FROM connections c
+            JOIN users u ON u.user_id = c.collector_user_id
+            JOIN postings p ON p.donor_user_id = c.donor_user_id
+            WHERE c.connection_status = 'Active'
+        """)
+
+        rows = cursor.fetchall()
+        print("🪵 Connections query result:", rows) 
+        conn.close()
+
+        requests = []
+        for row in rows:
+            requests.append({
+                'id': row['id'],
+                'sender_name': row['sender_name'],
+                'item_name': row['item_name'],
+                'time': row['time']
+            })
+
         return render_template('connections.html', requests=requests)
+
 
     @app.route('/hub')
     def hub():
@@ -300,23 +367,71 @@ def register_routes(app):
         global conversions
         conversions = [c for c in conversions if c['id'] != conversion_id]
         return redirect(url_for('impact'))
-
-    @app.route('/discover')
+    
+    #IVY CODE FOR DISCOVER
+    @app.route('/discover', methods=['GET'])
     def discover():
-        search_query = request.args.get('search', '').lower()
-        category = request.args.get('category', '').lower()
-        location = request.args.get('location', '').lower()
+        # Fetching query parameters from URL for filtering
+        search_query = request.args.get('search', '').lower()  # Search term for title and description
+        location = request.args.get('location', '').lower()   # Location filter
+    
+        # Establish database connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
 
-        filtered_posts = []
-        for post in donation_posts:
-            matches_search = search_query in post['title'].lower() or search_query in post['description'].lower()
-            matches_category = category in post['category'].lower() if category else True
+        # Base query for selecting posts
+        query = """
+            SELECT 
+                p.postings_id, 
+                p.post_title, 
+                p.description, 
+                p.post_date, 
+                p.pick_up_location, 
+                u.fname || ' ' || u.lname AS username, 
+                u.location_title AS location
+            FROM postings p
+            JOIN users u ON p.donor_user_id = u.user_id
+            WHERE p.post_status = 'New' 
+                AND p.is_deleted = 0
+        """
 
-            if matches_search and matches_category:
-                filtered_posts.append(post)
+        # Adding filters if there are search and location values
+        filters = []
+        if search_query:
+            query += " AND (LOWER(p.post_title) LIKE ? OR LOWER(p.description) LIKE ?)"
+            filters.extend([f'%{search_query}%', f'%{search_query}%'])
 
-            return render_template('discover.html', posts=filtered_posts, search=search_query, category=category,
-                                   donation_posts=donation_posts)
+        if location:
+            query += " AND LOWER(p.pick_up_location) LIKE ?"
+            filters.append(f'%{location}%')
+
+        # Execute the query with filters
+        cursor.execute(query, filters)
+        posts = cursor.fetchall()
+
+        # Close the connection
+        conn.close()
+
+        # Prepare posts data for the response (both for the template and live search)
+        posts_list = []
+        for post in posts:
+            posts_list.append({
+                'id': post['postings_id'],
+                'title': post['post_title'],
+                'description': post['description'],
+                'date_posted': post['post_date'],
+                'location': post['pick_up_location'],
+                'username': post['username'],
+                'location_title': post['location'],
+            })
+
+        # If it's an AJAX request, return JSON, else render the template
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # AJAX request
+            return jsonify({'posts': posts_list})
+        else:
+            return render_template('discover.html', posts=posts_list, search=search_query, location=location)
+
+
 
     @app.route('/donation/<post_id>')
     def view_donation(post_id):
@@ -359,154 +474,7 @@ def get_db_connection():
     return conn
 
 
-# IVY CODE:
-# ✅ Global Data (Mock)
-requests = [
-    {
-        'id': 'req1',
-        'sender_name': 'Alex Johnson',
-        'item_name': 'Food Packaging',
-        'time': '2 hours ago',
-        'description': 'used food packaging',
-        'status': 'not collected',
-        'location': 'Makati City'
-    },
-    {
-        'id': 'req2',
-        'sender_name': 'Maria Gomez',
-        'item_name': 'Plastic Bottles',
-        'time': 'Yesterday',
-        'description': '1L water bottles',
-        'status': 'not collected',
-        'location': 'Lipa City'
-    },
-    {
-        'id': 'req3',
-        'sender_name': 'John Wick',
-        'item_name': 'Cans',
-        'time': 'Just now',
-        'description': 'food cans',
-        'status': 'not collected',
-        'location': 'Malolos City'
-    }
-]
 
-conversions = [
-    {
-        'id': 'conv1',
-        'waste_item': 'Plastic Bottles',
-        'product': 'Classroom Chairs',
-        'time': '2 days ago',
-        'description': 'Used bottles were molded into chairs for schools.'
-    },
-    {
-        'id': 'conv2',
-        'waste_item': 'Paper bags',
-        'product': 'Paper vase',
-        'time': '5 hours ago',
-        'description': 'Converted into paper vase.'
-    },
-    {
-        'id': 'conv3',
-        'waste_item': 'Old Newspapers',
-        'product': 'Recycled Paper',
-        'time': '1 week ago',
-        'description': 'Turned into eco-friendly paper sheets.'
-    }
-]
-
-donation_posts = [
-    {
-        'id': 'post1',
-        'title': 'Glass Jars',
-        'category': 'Glass',
-        'description': 'Clean glass jars with lids, previously used for sauces.',
-        'username': 'Ella Santos',
-        'location': 'Quezon City',
-        'date_posted': 'April 10, 2025'
-    },
-    {
-        'id': 'post2',
-        'title': 'Shredded Documents',
-        'category': 'Paper',
-        'description': 'Confidential shredded papers in sealed bags.',
-        'username': 'Marco Cruz',
-        'location': 'Pasig City',
-        'date_posted': 'January 12, 2025'
-    },
-    {
-        'id': 'post3',
-        'title': 'Empty Shampoo Bottles',
-        'category': 'Plastic',
-        'description': 'Various brands of empty, rinsed shampoo bottles.',
-        'username': 'Tina Yu',
-        'location': 'Cebu City',
-        'date_posted': 'March 4, 2025'
-    },
-    {
-        'id': 'post4',
-        'title': 'Aluminum Foil Scraps',
-        'category': 'Metal',
-        'description': 'Used but clean aluminum foil collected from a catering event.',
-        'username': 'Jorge Lim',
-        'location': 'Davao City',
-        'date_posted': 'February 16, 2025'
-    },
-    {
-        'id': 'post5',
-        'title': 'Office File Folders',
-        'category': 'Paper',
-        'description': 'Paper folders from a recent office cleanup.',
-        'username': 'Alicia Ramos',
-        'location': 'Makati City',
-        'date_posted': 'March 20, 2025'
-    },
-    {
-        'id': 'post6',
-        'title': 'Old CDs and DVD Cases',
-        'category': 'Plastic',
-        'description': 'Outdated media and cases available for creative reuse.',
-        'username': 'Kenji Tan',
-        'location': 'Baguio City',
-        'date_posted': 'April 25, 2025'
-    },
-    {
-        'id': 'post7',
-        'title': 'Torn Manila Envelopes',
-        'category': 'Paper',
-        'description': 'Damaged but dry envelopes from school use.',
-        'username': 'Bianca Go',
-        'location': 'San Fernando',
-        'date_posted': 'April 30, 2025'
-    },
-    {
-        'id': 'post8',
-        'title': 'Aluminum Food Trays',
-        'category': 'Metal',
-        'description': 'Used food trays from a family event. Rinsed clean.',
-        'username': 'Liam Reyes',
-        'location': 'Taguig City',
-        'date_posted': 'February 8, 2025'
-    },
-    {
-        'id': 'post9',
-        'title': 'Plastic Plant Pots',
-        'category': 'Plastic',
-        'description': 'Various sizes of plastic pots no longer in use.',
-        'username': 'Isabel Cruz',
-        'location': 'Laguna',
-        'date_posted': 'January 27, 2025'
-    },
-    {
-        'id': 'post10',
-        'title': 'Paperback Books',
-        'category': 'Paper',
-        'description': 'Old textbooks and novels for recycling or reuse.',
-        'username': 'Nico De Leon',
-        'location': 'Iloilo City',
-        'date_posted': 'March 31, 2025'
-    }
-]
 
 # RUN THE FLASK APP
 if __name__ == "__main__":
