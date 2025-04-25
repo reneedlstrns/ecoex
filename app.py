@@ -1,6 +1,5 @@
 import sqlite3
 import logging
-import os
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from datetime import datetime
 from extensions import bcrypt, db
@@ -484,11 +483,7 @@ def register_routes(app):
         # Fetching query parameters from URL for filtering
         search_query = request.args.get('search', '').lower()  # Search term for title and description
         location = request.args.get('location', '').lower()   # Location filter
-
-        # Debugging: Print the values of search_query and location
-        print("Search query:", search_query)
-        print("Location:", location)
-
+    
         # Establish database connection
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -501,7 +496,8 @@ def register_routes(app):
                 p.description, 
                 p.post_date, 
                 p.pick_up_location, 
-                u.fname || ' ' || u.lname AS username
+                u.fname || ' ' || u.lname AS username, 
+                u.location_title AS location
             FROM postings p
             JOIN users u ON p.donor_user_id = u.user_id
             WHERE p.post_status = 'New' 
@@ -517,10 +513,6 @@ def register_routes(app):
         if location:
             query += " AND LOWER(p.pick_up_location) LIKE ?"
             filters.append(f'%{location}%')
-
-        # Debugging: Print the final query and filters
-        print("Final SQL query:", query)
-        print("Filters:", filters)    
 
         # Execute the query with filters
         cursor.execute(query, filters)
@@ -542,15 +534,14 @@ def register_routes(app):
         posts_list = []
         for post in posts:
             posts_list.append({
-                'postings_id': post['postings_id'],
-                'postings_title': post['post_title'],
+                'id': post['postings_id'],
+                'title': post['post_title'],
                 'description': post['description'],
-                'post_date': post['post_date'],
-                'pick_up_location': post['pick_up_location'],
-                'username': post['username']
+                'date_posted': post['post_date'],
+                'location': post['pick_up_location'],
+                'username': post['username'],
+                'location_title': post['location'],
             })
-        # Debugging: Print the posts list to see if data is being fetched correctly
-        print("Posts List:", posts_list)    
 
         # If it's an AJAX request, return JSON, else render the template
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # AJAX request
@@ -595,10 +586,9 @@ app = create_app()
 
 # Database Connection
 def get_db_connection():
-    db_path = os.path.join(app.instance_path, 'ecoexchange.db')
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect("ecoexchange.db")
     conn.row_factory = sqlite3.Row
-    print(f"✅ Connected to: {db_path}")
+    print("✅ Database connected successfully!")  # Debugging print
     return conn
 
 

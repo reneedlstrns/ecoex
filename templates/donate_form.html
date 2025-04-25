@@ -2,7 +2,7 @@
 <h2>Donate an Item</h2>
 <form action="/donate" method="POST">
     <label for="post_title">Title:</label>
-    <input type="text" id="post_title" name="post_title" required>
+    <input type="text" id="post_title" name="post_title" autocomplete="title" required>
 
    <label for="item_id">Select Item:</label>
 <select name="item_id" id="itemDropdown" required>
@@ -18,10 +18,10 @@
 
 
     <label for="quantity">Quantity:</label>
-    <input type="number" id="quantity" name="quantity" required>
+    <input type="number" id="quantity" name="quantity" autocomplete="quantity" required>
 
     <label for="pick_up_location">Pick-up Location:</label>
-    <input type="text" id="pick_up_location" name="pick_up_location" required>
+    <input type="text" id="pick_up_location" name="pick_up_location" autocomplete="location" required>
 
     <label for="description">Description:</label>
     <textarea id="description" name="description" required></textarea>
