@@ -374,7 +374,11 @@ def register_routes(app):
         # Fetching query parameters from URL for filtering
         search_query = request.args.get('search', '').lower()  # Search term for title and description
         location = request.args.get('location', '').lower()   # Location filter
-    
+
+        # Debugging: Print the values of search_query and location
+        print("Search query:", search_query)
+        print("Location:", location)
+
         # Establish database connection
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -387,8 +391,7 @@ def register_routes(app):
                 p.description, 
                 p.post_date, 
                 p.pick_up_location, 
-                u.fname || ' ' || u.lname AS username, 
-                u.location_title AS location
+                u.fname || ' ' || u.lname AS username
             FROM postings p
             JOIN users u ON p.donor_user_id = u.user_id
             WHERE p.post_status = 'New' 
@@ -405,6 +408,10 @@ def register_routes(app):
             query += " AND LOWER(p.pick_up_location) LIKE ?"
             filters.append(f'%{location}%')
 
+        # Debugging: Print the final query and filters
+        print("Final SQL query:", query)
+        print("Filters:", filters)    
+
         # Execute the query with filters
         cursor.execute(query, filters)
         posts = cursor.fetchall()
@@ -416,14 +423,15 @@ def register_routes(app):
         posts_list = []
         for post in posts:
             posts_list.append({
-                'id': post['postings_id'],
-                'title': post['post_title'],
+                'postings_id': post['postings_id'],
+                'postings_title': post['post_title'],
                 'description': post['description'],
-                'date_posted': post['post_date'],
-                'location': post['pick_up_location'],
-                'username': post['username'],
-                'location_title': post['location'],
+                'post_date': post['post_date'],
+                'pick_up_location': post['pick_up_location'],
+                'username': post['username']
             })
+        # Debugging: Print the posts list to see if data is being fetched correctly
+        print("Posts List:", posts_list)    
 
         # If it's an AJAX request, return JSON, else render the template
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # AJAX request

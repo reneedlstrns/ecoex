@@ -17,76 +17,87 @@
     </div>
 
     <ul class="donation-list" id="donationList">
-        {% for post in posts %}
-        <li class="donation-card">
-            <h3>{{ post.title }}</h3>
-            <p><strong>Description:</strong> {{ post.description }}</p>
-            <p><strong>Location:</strong> {{ post.location }}</p>
-            <p><strong>Uploaded by:</strong> {{ post.username }}</p>
-            <p><strong>Posted on:</strong> {{ post.date_posted }}</p>
+        {% if posts and posts|length > 0 %}
+            {% for post in posts %}
+                <li class="donation-card">
+                    <h3>{{ post.post_title }}</h3>
+                    <p><strong>Description:</strong> {{ post.description }}</p>
+                    <p><strong>Location:</strong> {{ post.pick_up_location }}</p>
+                    <p><strong>Uploaded by:</strong> {{ post.username }}</p>
+                    <p><strong>Posted on:</strong> {{ post.post_date }}</p>
 
-            <div class="donation-actions">
-                <a href="{{ url_for('view_donation', post_id=post.id) }}" class="view-btn">View</a>
+                    <div class="donation-actions">
+                        <a href="{{ url_for('view_donation', post_id=post.postings_id) }}" class="view-btn">View</a>
 
-                <form action="{{ url_for('request_collection', post_id=post.id) }}" method="POST">
-                    <button type="submit" class="request-btn">Request to Collect</button>
-                </form>
-            </div>
-        </li>
-        {% else %}
-            {% if search or location %}
-                <p>No posts found matching your criteria.</p>
-            {% endif %}
-        {% endfor %}
+                        <form action="{{ url_for('request_collection', post_id=post.postings_id) }}" method="POST">
+                            <button type="submit" class="request-btn">Request to Collect</button>
+                        </form>
+                    </div>
+                </li>
+            {% endfor %}
+        {% elif search or location %}
+            
+        {% endif %}
     </ul>
 </div>
 {% include 'footer.html' %}
 {% endblock %}
 
-<!-- JavaScript for Live Search -->
 <script>
-    // Event listener for the search input
-    document.getElementById('searchInput').addEventListener('input', function() {
-        let searchQuery = this.value;
-        let locationQuery = document.getElementById('locationInput').value;
+    const searchInput = document.getElementById('searchInput');
+    const locationInput = document.getElementById('locationInput');
+    const donationList = document.getElementById('donationList');
 
-        // Make an AJAX request to the server for filtered results
-        fetch('{{ url_for("discover") }}?search=' + searchQuery + '&location=' + locationQuery)
-            .then(response => response.json())
-            .then(data => {
-                let donationList = document.getElementById('donationList');
-                donationList.innerHTML = '';  // Clear existing results
+    // Save the initial posts HTML so we can restore it
+    const initialDonationList = donationList.innerHTML;
 
-                // Check if we have results
-                if (data.posts && data.posts.length > 0) {
-                    data.posts.forEach(post => {
-                        let listItem = document.createElement('li');
-                        listItem.classList.add('donation-card');
-                        listItem.innerHTML = `
-                            <h3>${post.title}</h3>
-                            <p><strong>Description:</strong> ${post.description}</p>
-                            <p><strong>Location:</strong> ${post.location}</p>
-                            <p><strong>Uploaded by:</strong> ${post.username}</p>
-                            <p><strong>Posted on:</strong> ${post.date_posted}</p>
-                            <div class="donation-actions">
-                                <a href="/view_donation/${post.id}" class="view-btn">View</a>
-                                <form action="/request_collection/${post.id}" method="POST">
-                                    <button type="submit" class="request-btn">Request to Collect</button>
-                                </form>
-                            </div>
-                        `;
-                        donationList.appendChild(listItem);
-                    });
-                } else {
-                    donationList.innerHTML = '<p>No posts found matching your criteria.</p>';
-                }
-            });
-    });
+    function handleLiveSearch() {
+        const searchQuery = searchInput.value.trim();
+        const locationQuery = locationInput.value.trim();
 
-    // Optional: Add event listener to the location input if you want to trigger search on location change as well
-    document.getElementById('locationInput').addEventListener('input', function() {
-        document.getElementById('searchInput').dispatchEvent(new Event('input'));
-    });
+        // If both inputs are empty, reset to original server-rendered posts
+        if (!searchQuery && !locationQuery) {
+            donationList.innerHTML = initialDonationList;
+            return;
+        }
+
+        // Otherwise, fetch filtered results
+        fetch(`{{ url_for('discover') }}?search=${encodeURIComponent(searchQuery)}&location=${encodeURIComponent(locationQuery)}`, {
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            donationList.innerHTML = ''; // Clear the current list
+
+            if (data.posts && data.posts.length > 0) {
+                data.posts.forEach(post => {
+                    const li = document.createElement('li');
+                    li.classList.add('donation-card');
+                    li.innerHTML = `
+                        <h3>${post.post_title}</h3>
+                        <p><strong>Description:</strong> ${post.description}</p>
+                        <p><strong>Location:</strong> ${post.pick_up_location}</p>
+                        <p><strong>Uploaded by:</strong> ${post.username}</p>
+                        <p><strong>Posted on:</strong> ${post.post_date}</p>
+                        <div class="donation-actions">
+                            <a href="/view_donation/${post.postings_id}" class="view-btn">View</a>
+                            <form action="/request_collection/${post.postings_id}" method="POST">
+                                <button type="submit" class="request-btn">Request to Collect</button>
+                            </form>
+                        </div>
+                    `;
+                    donationList.appendChild(li);
+                });
+            } else {
+                // Inject the "no results" message if no posts were found
+                donationList.innerHTML = '<p class="no-results">No posts found matching your criteria.</p>';
+            }
+        });
+    }
+
+    // Attach input listeners for live search
+    searchInput.addEventListener('input', handleLiveSearch);
+    locationInput.addEventListener('input', handleLiveSearch);
 </script>
 
 </body>
