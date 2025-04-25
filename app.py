@@ -1,5 +1,6 @@
 import sqlite3
 import logging
+import os
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 from datetime import datetime
 from extensions import bcrypt, db
@@ -476,9 +477,10 @@ app = create_app()
 
 # Database Connection
 def get_db_connection():
-    conn = sqlite3.connect("ecoexchange.db")
+    db_path = os.path.join(app.instance_path, 'ecoexchange.db')
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
-    print("✅ Database connected successfully!")  # Debugging print
+    print(f"✅ Connected to: {db_path}")
     return conn
 
 
