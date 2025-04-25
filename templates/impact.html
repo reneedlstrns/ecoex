@@ -2,41 +2,30 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <title>Impact - Your Donations</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/profile.css') }}">
 </head>
 <body>
-<div class="impact-section">
-        <h2 class="page-title">Impact Conversions</h2>
 
-        {% if conversions %}
-            <ul class="request-list">
-                {% for conversion in conversions %}
-                    <li class="request-card">
-                        <div class="request-info">
-                            <p>
-                                <strong>{{ conversion.waste_item }}</strong> was converted into
-                                <em>{{ conversion.product }}</em>
-                            </p>
-                            <p class="timestamp">Converted on: {{ conversion.time }}</p>
-                        </div>
-                        <div class="request-actions">
-                            <a href="{{ url_for('view_conversion', conversion_id=conversion.id) }}">
-                                <button>View</button>
-                            </a>
-<!-- Edit Conversion Button -->
-<button type="submit" id="edit-button">Edit</button>
+    <div class="impact-section">
+        <h2 class="page-title">Your Impact Score {{ total_score }}</h2>
 
-
-                            <form action="{{ url_for('delete_conversion', conversion_id=conversion.id) }}" method="POST" style="display:inline;">
-                                <button type="submit" id="button-danger" onclick="return confirm('Are you sure you want to delete this conversion?')">Delete</button>
-                            </form>
-                        </div>
+        
+        {% if donations %}
+            <ul class="donation-list">
+                {% for donation in donations %}
+                    <li class="donation-card">
+                        <h3 class="donation-title">{{ donation.post_title }}</h3>
+                        <p><strong>Posted on:</strong> {{ donation.post_date }}</p>
+                        <p><strong>Location:</strong> {{ donation.pick_up_location }}</p>
+                        <p><strong>Score Earned:</strong> {{ donation.score }}</p>
                     </li>
                 {% endfor %}
             </ul>
         {% else %}
-            <p>No conversions made yet.</p>
+            <p class="no-donations">No donations have been made yet.</p>
         {% endif %}
     </div>
+
 </body>
 </html>
