@@ -1,50 +1,9 @@
 console.log("✅ JavaScript Loaded Successfully!");
 
-document.addEventListener("DOMContentLoaded", function () {
-    const donateBtn = document.getElementById("donate-btn");
-    const modal = document.getElementById("donate-modal"); // ✅ Use `id` for modal targeting
-    const modalContent = document.querySelector(".modal-content");
-    const closeBtn = document.querySelector(".close");
-
-    console.log("✅ JavaScript Loaded");
-    console.log("✅ Donate button found:", donateBtn);
-    console.log("✅ Modal found:", modal);
-    console.log("✅ Modal content found:", modalContent);
-
-    if (!donateBtn || !modal || !modalContent || !closeBtn) {
-        console.error("❌ Error: Donate button, modal, or close button not found!");
-        return;
-    }
-
-    donateBtn.addEventListener("click", function () {
-        console.log("✅ Donate button clicked!");
-
-        fetch("/donate")
-            .then(response => response.text())
-            .then(html => {
-                console.log("✅ Donation form loaded successfully!");
-                modalContent.innerHTML = html;
-                modal.classList.add("show");
-                console.log("✅ Modal should now be visible!");
-            })
-            .catch(error => console.error("❌ Error loading donation form:", error));
-    });
-
-    closeBtn.addEventListener("click", function () {
-        modal.classList.remove("show");
-    });
-
-    window.addEventListener("click", function (event) {
-        if (event.target === modal) {
-            modal.classList.remove("show");
-        }
-    });
-});
-
 // DONATE BUTTON
 document.addEventListener("DOMContentLoaded", function () {
     const donateBtn = document.getElementById("donate-btn");
-    const modal = document.getElementById("donate-modal");
+    const modal = document.querySelector(".modal");
     const modalContent = document.querySelector(".modal-content");
     const closeBtn = document.querySelector(".close");
 
