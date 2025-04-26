@@ -218,10 +218,35 @@ def register_routes(app):
     def impact():
         return render_template('impact.html', conversions=conversions)
 
+     
     @app.route('/connections')
     def connections():
-        return render_template('connections.html', requests=requests)
+        if 'user_email' in session:
+            user_id = session['user_id']
 
+            conn = get_db_connection()
+            cursor = conn.cursor()
+
+            cursor.execute("""
+                SELECT DISTINCT u.user_id, u.fname, u.lname, u.email
+                FROM users u
+                JOIN postings p ON u.user_id = p.donor_user_id
+                WHERE p.collector_by_user_id = ?
+                UNION
+                SELECT DISTINCT u.user_id, u.fname, u.lname, u.email
+                FROM users u
+                JOIN postings p ON u.user_id = p.collector_by_user_id
+                WHERE p.donor_user_id = ?;
+            """, (user_id, user_id))
+
+            connections = cursor.fetchall()
+            conn.close()
+
+            return render_template('connections.html', connections=connections)
+        else:
+            return redirect(url_for('login'))
+ 
+   
     @app.route('/hub')
     def hub():
         return render_template('hub.html')
@@ -303,20 +328,40 @@ def register_routes(app):
 
     @app.route('/discover')
     def discover():
+        # Get filter parameters from the request (search, category, location)
         search_query = request.args.get('search', '').lower()
         category = request.args.get('category', '').lower()
         location = request.args.get('location', '').lower()
 
-        filtered_posts = []
-        for post in donation_posts:
-            matches_search = search_query in post['title'].lower() or search_query in post['description'].lower()
-            matches_category = category in post['category'].lower() if category else True
+         # Query the database for posts that are not deleted
+        filtered_posts = Posting.query.filter(Posting.is_deleted == False)
 
-            if matches_search and matches_category:
-                filtered_posts.append(post)
+        # Apply search filter on title and description
+        if search_query:
+            filtered_posts = filtered_posts.filter(
+                (Posting.post_title.ilike(f'%{search_query}%')) |
+                (Posting.description.ilike(f'%{search_query}%'))
+            )
+
+        # Apply category filter (assuming 'category' is stored in 'post_title' or a related column)
+        if category:
+            filtered_posts = filtered_posts.filter(
+                Posting.post_title.ilike(f'%{category}%')
+            )
 
             return render_template('discover.html', posts=filtered_posts, search=search_query, category=category,
                                    donation_posts=donation_posts)
+        # Apply location filter (assuming 'location' is stored in 'pick_up_location' or a related column)
+        if location:
+            filtered_posts = filtered_posts.filter(
+                Posting.pick_up_location.ilike(f'%{location}%')
+            )
+
+        # Execute the query and get the filtered list of posts
+        filtered_posts = filtered_posts.all()
+
+        # Render the template with the filtered posts and search params
+        return render_template('discover.html', posts=filtered_posts, search=search_query, category=category, location=location)
 
     @app.route('/donation/<post_id>')
     def view_donation(post_id):
@@ -508,9 +553,24 @@ donation_posts = [
     }
 ]
 
+
+def create_app():
+        app = Flask(__name__)
+        app.secret_key = "RENEE"
+        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecoexchange.db'
+        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+        # Initialize extensions
+        bcrypt.init_app(app)
+        db.init_app(app)
+
+
+
+
 # RUN THE FLASK APP
 if __name__ == "__main__":
     print("✅ Flask app is starting...")
+    app = create_app()
     with app.app_context():
         print(f"✅ SQLAlchemy is using the database connection: {db.engine.url}")
     app.run(debug=True)
