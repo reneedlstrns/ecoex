@@ -5,49 +5,98 @@
     {% include 'navbar.html' %}
 {% block content %}
 <div class="donation-section">
-    <h2 class="page-title">Discover and Collect Donations</h2>
+    <div class="sticky-search">
+        <h2 class="page-title">Discover and Collect Donations</h2>
+        <p class="highlight">There are {{ total_postings }} donations to choose from!</p>
+        <br>
 
- <div class="donation-search">
-    <form method="GET" action="{{ url_for('discover') }}" class="filter-form">
-        <input type="text" name="search" placeholder="Search..." value="{{ search }}" class="search-input">
-        <select name="category" class="category-select">
-            <option value="">All Categories</option>
-            <option value="Plastic" {% if category == 'plastic' %}selected{% endif %}>Plastic</option>
-            <option value="Metal" {% if category == 'metal' %}selected{% endif %}>Metal</option>
-            <option value="Paper" {% if category == 'paper' %}selected{% endif %}>Paper</option>
-<option value="Glass" {% if category == 'glass' %}selected{% endif %}>Glass</option>
+        <div class="donation-search">
+            <form method="GET" action="{{ url_for('discover') }}" class="filter-form" id="searchForm">
+                <input type="text" name="search" placeholder="Search..." value="{{ search }}" class="search-input" id="searchInput">
+                <input type="text" name="location" placeholder="Location..." value="{{ location }}" class="location-input" id="locationInput">
 
-        </select>
-
-        <button type="submit">Filter</button>
-    </form>
-</div>
-
-    <ul class="donation-list">
+                <button type="submit">Filter</button>
+            </form>
+        </div>
+    </div>
+    <ul class="donation-list" id="donationList">
         {% for post in posts %}
         <li class="donation-card">
             <h3>{{ post.title }}</h3>
+<<<<<<< HEAD
             <p><strong>Category:</strong> {{ post.item_type }}</p>
             <p>{{ post.description }}</p>
 <p><strong>Uploaded by:</strong> {{ post.username }} from {{ post.location }}</p>
+=======
+            <p><strong>Description:</strong> {{ post.description }}</p>
+            <p><strong>Location:</strong> {{ post.location }}</p>
+            <p><strong>Uploaded by:</strong> {{ post.username }}</p>
+            <p><strong>Posted on:</strong> {{ post.date_posted }}</p>
+>>>>>>> 71379b21b9863e0553111f63ee596f2004041649
 
-<div class="donation-actions">
-<a href="{{ url_for('view_donation', post_id=post.id) }}" class="view-btn">View</a>
+            <div class="donation-actions">
+                <a href="{{ url_for('view_donation', post_id=post.id) }}" class="view-btn">View</a>
 
-            <form action="{{ url_for('request_collection', post_id=post.id) }}" method="POST">
-                <button type="submit" class="request-btn">Request to Collect</button>
-            </form>
-</div>
-<p class="post-date">{{ post.date_posted }}</p>
+                <form action="{{ url_for('request_collection', post_id=post.id) }}" method="POST">
+                    <button type="submit" class="request-btn">Request to Collect</button>
+                </form>
+            </div>
         </li>
         {% else %}
-        <p>No posts found matching your criteria.</p>
+            {% if search or location %}
+                <p>No posts found matching your criteria.</p>
+            {% endif %}
         {% endfor %}
     </ul>
 </div>
 {% include 'footer.html' %}
 {% endblock %}
-</body>
-</html>
+
+<!-- JavaScript for Live Search -->
+<script>
+    // Event listener for the search input
+    document.getElementById('searchInput').addEventListener('input', function() {
+        let searchQuery = this.value;
+        let locationQuery = document.getElementById('locationInput').value;
+
+        // Make an AJAX request to the server for filtered results
+        fetch('{{ url_for("discover") }}?search=' + searchQuery + '&location=' + locationQuery)
+            .then(response => response.json())
+            .then(data => {
+                let donationList = document.getElementById('donationList');
+                donationList.innerHTML = '';  // Clear existing results
+
+                // Check if we have results
+                if (data.posts && data.posts.length > 0) {
+                    data.posts.forEach(post => {
+                        let listItem = document.createElement('li');
+                        listItem.classList.add('donation-card');
+                        listItem.innerHTML = `
+                            <h3>${post.title}</h3>
+                            <p><strong>Description:</strong> ${post.description}</p>
+                            <p><strong>Location:</strong> ${post.location}</p>
+                            <p><strong>Uploaded by:</strong> ${post.username}</p>
+                            <p><strong>Posted on:</strong> ${post.date_posted}</p>
+                            <div class="donation-actions">
+                                <a href="/view_donation/${post.id}" class="view-btn">View</a>
+                                <form action="/request_collection/${post.id}" method="POST">
+                                    <button type="submit" class="request-btn">Request to Collect</button>
+                                </form>
+                            </div>
+                        `;
+                        donationList.appendChild(listItem);
+                    });
+                } else {
+                    donationList.innerHTML = '<p>No posts found matching your criteria.</p>';
+                }
+            });
+    });
+
+    // Optional: Add event listener to the location input if you want to trigger search on location change as well
+    document.getElementById('locationInput').addEventListener('input', function() {
+        document.getElementById('searchInput').dispatchEvent(new Event('input'));
+    });
+</script>
+
 </body>
 </html>

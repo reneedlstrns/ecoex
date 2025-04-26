@@ -180,44 +180,143 @@ def register_routes(app):
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            cursor.execute(
-                "SELECT postings_id, donor_user_id, post_title, quantity, pick_up_location, description, post_status, collector_by_user_id FROM postings")
+            # Donations for the logged-in user
+            cursor.execute("""
+                SELECT postings_id, donor_user_id, post_title, quantity, pick_up_location, description, post_status, collector_by_user_id 
+                FROM postings
+            """)
             donations = cursor.fetchall()
 
-            cursor.execute("SELECT COALESCE(SUM(score), 0) AS total_score FROM postings WHERE donor_user_id = ?",
-                           (session["user_id"],))
+            # Total impact score
+            cursor.execute("""
+                SELECT COALESCE(SUM(score), 0) AS total_score 
+                FROM postings 
+                WHERE donor_user_id = ?
+            """, (session["user_id"],))
             total_score = cursor.fetchone()["total_score"]
+
+            # 💥 Get active connections for the user
+            cursor.execute("""
+                SELECT 
+                    c.donor_user_id,
+                    c.collector_user_id,
+                    c.connection_status,
+                    u1.fname || ' ' || u1.lname AS donor_name,
+                    u2.fname || ' ' || u2.lname AS collector_name,
+                    postings.post_title       
+                FROM connections c
+                JOIN users u1 ON u1.user_id = c.donor_user_id
+                JOIN users u2 ON u2.user_id = c.collector_user_id
+                LEFT JOIN postings ON c.postings_id = postings.postings_id  -- Join with postings to get the post title
+                WHERE c.connection_status = 'Active' AND c.donor_user_id = ?
+            """, (session["user_id"],))
+            connection_rows = cursor.fetchall()
+
+            # ✅ Count total connections where the user is either donor or collector
+            cursor.execute("""
+                SELECT COUNT(*) AS total_connections
+                FROM connections
+                WHERE donor_user_id = ? OR collector_user_id = ?
+            """, (session["user_id"], session["user_id"]))
+            total_connections = cursor.fetchone()["total_connections"]
+
+
+            # 💥 Impact data (for impact.html)
+            cursor.execute("""
+                SELECT 
+                    postings_id, 
+                    post_title, 
+                    post_date, 
+                    pick_up_location, 
+                    score
+                FROM postings
+                WHERE donor_user_id = ? AND is_deleted = 0
+            """, (session['user_id'],))
+            impact_rows = cursor.fetchall()
 
             conn.close()
 
-            return render_template("myprofile.html", donations=donations, total_score=total_score, user=user)
+            # Format connection data
+            requests = [{
+                'donor_name': row['donor_name'],
+                'collector_name': row['collector_name'],
+                'connection_status': row['connection_status'],
+                'post_title': row['post_title']  # Adding the post title here
+            } for row in connection_rows]
+
+
+            # Format impact
+            impact_donations = []
+            total_impact_score = 0
+            for row in impact_rows:
+                impact_donations.append({
+                    'post_title': row['post_title'],
+                    'score': row['score'],
+                    'post_date': row['post_date'],
+                    'pick_up_location': row['pick_up_location']
+                })
+                total_impact_score += row['score']
+
+
+            return render_template(
+                "myprofile.html",
+                user=user,
+                donations=donations,
+                total_score=total_score,
+                requests=requests,  # ✅ this is key!
+                impact_donations=impact_donations,
+                total_impact_score=total_impact_score,
+                total_connections=total_connections
+            )
         else:
             return redirect(url_for('login'))
+
 
     @app.route("/donations")
     def donations():
         if "user_id" not in session:
             return redirect(url_for("login"))
 
+        user_id = session["user_id"]
+
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        cursor.execute(
-            "SELECT post_id, donor_user_id, post_title, quantity, pick_up_location, description, post_status, collected_by_user_id FROM postings")
-        donations = cursor.fetchall()
+        # Only fetch donations posted by the logged-in user
+        cursor.execute("""
+            SELECT 
+                post_id, 
+                donor_user_id, 
+                post_title, 
+                quantity, 
+                pick_up_location, 
+                description, 
+                post_status, 
+                collected_by_user_id 
+            FROM postings 
+            WHERE donor_user_id = ? AND is_deleted = 0
+        """, (user_id,))
 
+        donations = cursor.fetchall()
+        total_postings = len(donations)
+ 
+        print(f"[DEBUG] User ID: {user_id}, Total Donations: {total_postings}")
         conn.close()
 
-        return render_template("donations.html", donations=donations)
+        return render_template("donations.html", donations=donations, total_postings=total_postings)
+
 
     @app.route('/collections')
     def collections():
         return render_template('collections.html')
-
+    
+    #IVY CODE FOR IMPACT
     @app.route('/impact')
     def impact():
-        return render_template('impact.html', conversions=conversions)
+        print("Impact route hit", flush=True)
+        user_id = session['user_id']  # Assuming the user is logged in and their ID is in the session
 
+<<<<<<< HEAD
      
     @app.route('/connections')
     def connections():
@@ -247,6 +346,90 @@ def register_routes(app):
             return redirect(url_for('login'))
  
    
+=======
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Query to fetch the donations posted by the user, including the score for each donation
+        cursor.execute("""
+            SELECT 
+                p.postings_id, 
+                p.post_title, 
+                p.post_date, 
+                p.pick_up_location, 
+                p.score
+            FROM postings p
+            WHERE p.donor_user_id = ? AND p.is_deleted = 0
+        """, (user_id,))
+             
+        rows = cursor.fetchall()
+
+        print(f"[DEBUG] Rows fetched from DB: {rows}", flush=True)  # Debug print for raw DB output
+
+        # Prepare the donations data for the template
+        donations = []
+        total_score = 0  # Initialize total_score
+
+        for row in rows:
+            donations.append({
+                'post_title': row['post_title'],
+                'score': row['score'],
+                'post_date': row['post_date'],
+                'pick_up_location': row['pick_up_location']
+            })
+            print(f"[DEBUG] Donation data being added: {donations[-1]}")  # Debug print
+            total_score += row['score']  # Accumulate the score
+
+        print(f"[DEBUG] Total Impact Score: {total_score}")  # Debug print        
+        conn.close()
+
+        # Pass the donations data to the template
+        return render_template('impact.html', donations=donations, total_score=total_score)
+
+    #IVY CODE FOR CONNECTIONS
+    @app.route('/connections')
+    def connections():
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Query to fetch connections with user names and connection status
+        cursor.execute("""
+            SELECT 
+                c.donor_user_id,
+                c.collector_user_id,
+                c.connection_status,
+                u1.fname || ' ' || u1.lname AS donor_name,
+                u2.fname || ' ' || u2.lname AS collector_name
+            FROM connections c
+            JOIN users u1 ON u1.user_id = c.donor_user_id
+            JOIN users u2 ON u2.user_id = c.collector_user_id
+            WHERE c.connection_status = 'Active'
+        """)
+
+        rows = cursor.fetchall()
+        print("[DEBUG] Raw rows from DB:")
+        for row in rows:
+            print(dict(row))  # 👈 print each row as a dictionary    
+
+        conn.close()
+
+        # Prepare the data to be passed to the template
+        requests = []
+        for row in rows:
+            requests.append({
+                'donor_name': row['donor_name'],
+                'collector_name': row['collector_name'],
+                'connection_status': row['connection_status']
+            })
+        print("[DEBUG] Requests to be passed to template:", requests)
+        # Pass the data to the template
+        return render_template('connections.html', requests=requests)
+
+
+>>>>>>> 71379b21b9863e0553111f63ee596f2004041649
     @app.route('/hub')
     def hub():
         return render_template('hub.html')
@@ -325,9 +508,11 @@ def register_routes(app):
         global conversions
         conversions = [c for c in conversions if c['id'] != conversion_id]
         return redirect(url_for('impact'))
-
-    @app.route('/discover')
+    
+    #IVY CODE FOR DISCOVER
+    @app.route('/discover', methods=['GET'])
     def discover():
+<<<<<<< HEAD
         # Get filter parameters from the request (search, category, location)
         search_query = request.args.get('search', '').lower()
         category = request.args.get('category', '').lower()
@@ -362,6 +547,78 @@ def register_routes(app):
 
         # Render the template with the filtered posts and search params
         return render_template('discover.html', posts=filtered_posts, search=search_query, category=category, location=location)
+=======
+        # Fetching query parameters from URL for filtering
+        search_query = request.args.get('search', '').lower()  # Search term for title and description
+        location = request.args.get('location', '').lower()   # Location filter
+    
+        # Establish database connection
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Base query for selecting posts
+        query = """
+            SELECT 
+                p.postings_id, 
+                p.post_title, 
+                p.description, 
+                p.post_date, 
+                p.pick_up_location, 
+                u.fname || ' ' || u.lname AS username, 
+                u.location_title AS location
+            FROM postings p
+            JOIN users u ON p.donor_user_id = u.user_id
+            WHERE p.post_status = 'New' 
+                AND p.is_deleted = 0
+        """
+
+        # Adding filters if there are search and location values
+        filters = []
+        if search_query:
+            query += " AND (LOWER(p.post_title) LIKE ? OR LOWER(p.description) LIKE ?)"
+            filters.extend([f'%{search_query}%', f'%{search_query}%'])
+
+        if location:
+            query += " AND LOWER(p.pick_up_location) LIKE ?"
+            filters.append(f'%{location}%')
+
+        # Execute the query with filters
+        cursor.execute(query, filters)
+        posts = cursor.fetchall()
+
+        # Total number of active, non-deleted postings (matching the same filters as shown)
+        cursor.execute("""
+            SELECT COUNT(*) AS total_postings 
+            FROM postings 
+            WHERE post_status = 'New' AND is_deleted = 0
+        """)
+        total_postings = cursor.fetchone()['total_postings']
+
+
+        # Close the connection
+        conn.close()
+
+        # Prepare posts data for the response (both for the template and live search)
+        posts_list = []
+        for post in posts:
+            posts_list.append({
+                'id': post['postings_id'],
+                'title': post['post_title'],
+                'description': post['description'],
+                'date_posted': post['post_date'],
+                'location': post['pick_up_location'],
+                'username': post['username'],
+                'location_title': post['location'],
+            })
+
+        # If it's an AJAX request, return JSON, else render the template
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # AJAX request
+            return jsonify({'posts': posts_list})
+        else:
+            return render_template('discover.html', posts=posts_list, search=search_query, location=location, total_postings=total_postings)
+
+
+>>>>>>> 71379b21b9863e0553111f63ee596f2004041649
 
     @app.route('/donation/<post_id>')
     def view_donation(post_id):
@@ -404,154 +661,7 @@ def get_db_connection():
     return conn
 
 
-# IVY CODE:
-# ✅ Global Data (Mock)
-requests = [
-    {
-        'id': 'req1',
-        'sender_name': 'Alex Johnson',
-        'item_name': 'Food Packaging',
-        'time': '2 hours ago',
-        'description': 'used food packaging',
-        'status': 'not collected',
-        'location': 'Makati City'
-    },
-    {
-        'id': 'req2',
-        'sender_name': 'Maria Gomez',
-        'item_name': 'Plastic Bottles',
-        'time': 'Yesterday',
-        'description': '1L water bottles',
-        'status': 'not collected',
-        'location': 'Lipa City'
-    },
-    {
-        'id': 'req3',
-        'sender_name': 'John Wick',
-        'item_name': 'Cans',
-        'time': 'Just now',
-        'description': 'food cans',
-        'status': 'not collected',
-        'location': 'Malolos City'
-    }
-]
 
-conversions = [
-    {
-        'id': 'conv1',
-        'waste_item': 'Plastic Bottles',
-        'product': 'Classroom Chairs',
-        'time': '2 days ago',
-        'description': 'Used bottles were molded into chairs for schools.'
-    },
-    {
-        'id': 'conv2',
-        'waste_item': 'Paper bags',
-        'product': 'Paper vase',
-        'time': '5 hours ago',
-        'description': 'Converted into paper vase.'
-    },
-    {
-        'id': 'conv3',
-        'waste_item': 'Old Newspapers',
-        'product': 'Recycled Paper',
-        'time': '1 week ago',
-        'description': 'Turned into eco-friendly paper sheets.'
-    }
-]
-
-donation_posts = [
-    {
-        'id': 'post1',
-        'title': 'Glass Jars',
-        'category': 'Glass',
-        'description': 'Clean glass jars with lids, previously used for sauces.',
-        'username': 'Ella Santos',
-        'location': 'Quezon City',
-        'date_posted': 'April 10, 2025'
-    },
-    {
-        'id': 'post2',
-        'title': 'Shredded Documents',
-        'category': 'Paper',
-        'description': 'Confidential shredded papers in sealed bags.',
-        'username': 'Marco Cruz',
-        'location': 'Pasig City',
-        'date_posted': 'January 12, 2025'
-    },
-    {
-        'id': 'post3',
-        'title': 'Empty Shampoo Bottles',
-        'category': 'Plastic',
-        'description': 'Various brands of empty, rinsed shampoo bottles.',
-        'username': 'Tina Yu',
-        'location': 'Cebu City',
-        'date_posted': 'March 4, 2025'
-    },
-    {
-        'id': 'post4',
-        'title': 'Aluminum Foil Scraps',
-        'category': 'Metal',
-        'description': 'Used but clean aluminum foil collected from a catering event.',
-        'username': 'Jorge Lim',
-        'location': 'Davao City',
-        'date_posted': 'February 16, 2025'
-    },
-    {
-        'id': 'post5',
-        'title': 'Office File Folders',
-        'category': 'Paper',
-        'description': 'Paper folders from a recent office cleanup.',
-        'username': 'Alicia Ramos',
-        'location': 'Makati City',
-        'date_posted': 'March 20, 2025'
-    },
-    {
-        'id': 'post6',
-        'title': 'Old CDs and DVD Cases',
-        'category': 'Plastic',
-        'description': 'Outdated media and cases available for creative reuse.',
-        'username': 'Kenji Tan',
-        'location': 'Baguio City',
-        'date_posted': 'April 25, 2025'
-    },
-    {
-        'id': 'post7',
-        'title': 'Torn Manila Envelopes',
-        'category': 'Paper',
-        'description': 'Damaged but dry envelopes from school use.',
-        'username': 'Bianca Go',
-        'location': 'San Fernando',
-        'date_posted': 'April 30, 2025'
-    },
-    {
-        'id': 'post8',
-        'title': 'Aluminum Food Trays',
-        'category': 'Metal',
-        'description': 'Used food trays from a family event. Rinsed clean.',
-        'username': 'Liam Reyes',
-        'location': 'Taguig City',
-        'date_posted': 'February 8, 2025'
-    },
-    {
-        'id': 'post9',
-        'title': 'Plastic Plant Pots',
-        'category': 'Plastic',
-        'description': 'Various sizes of plastic pots no longer in use.',
-        'username': 'Isabel Cruz',
-        'location': 'Laguna',
-        'date_posted': 'January 27, 2025'
-    },
-    {
-        'id': 'post10',
-        'title': 'Paperback Books',
-        'category': 'Paper',
-        'description': 'Old textbooks and novels for recycling or reuse.',
-        'username': 'Nico De Leon',
-        'location': 'Iloilo City',
-        'date_posted': 'March 31, 2025'
-    }
-]
 
 
 def create_app():
