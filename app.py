@@ -560,7 +560,6 @@ def register_routes(app):
     #IVY CODE FOR DISCOVER
     @app.route('/discover', methods=['GET'])
     def discover():
-<<<<<<< HEAD
         # Get filter parameters from the request (search, category, location)
         search_query = request.args.get('search', '').lower()
         category = request.args.get('category', '').lower()
@@ -595,7 +594,6 @@ def register_routes(app):
 
         # Render the template with the filtered posts and search params
         return render_template('discover.html', posts=filtered_posts, search=search_query, category=category, location=location)
-=======
         # Fetching query parameters from URL for filtering
         search_query = request.args.get('search', '').lower()  # Search term for title and description
         location = request.args.get('location', '').lower()   # Location filter
