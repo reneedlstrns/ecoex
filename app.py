@@ -564,6 +564,8 @@ def create_app():
         bcrypt.init_app(app)
         db.init_app(app)
 
+        # Register routes
+        register_routes(app)
 
 
 
