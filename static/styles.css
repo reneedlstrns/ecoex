@@ -723,3 +723,39 @@ footer {
 .donation-scroll-wrapper::-webkit-scrollbar-thumb:hover {
     background-color: #999;
 }
+/* General flash message styling */
+.flash-messages {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.flash-message {
+    padding: 10px 20px;
+    margin: 10px 0;
+    border-radius: 5px;
+    font-size: 16px;
+    display: inline-block;
+    width: auto;
+}
+
+/* Success message styling */
+.flash-message.success {
+    background-color: #28a745;
+    color: white;
+    border: 1px solid #28a745;
+}
+
+/* Danger message styling */
+.flash-message.danger {
+    background-color: #dc3545;
+    color: white;
+    border: 1px solid #dc3545;
+}
+
+/* Warning message styling */
+.flash-message.warning {
+    background-color: #ffc107;
+    color: black;
+    border: 1px solid #ffc107;
+}

@@ -1,8 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
     {% include 'head.html' %}
+    
 <body>
     {% include 'navbar.html' %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-messages">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
 {% block content %}
 <div class="donation-section">
     <div class="sticky-search">
@@ -31,11 +45,22 @@
 
                     <div class="donation-actions">
                         <a href="{{ url_for('view_donation', post_id=post.postings_id) }}" class="view-btn">View</a>
-
-                        <form action="{{ url_for('request_collection', post_id=post.postings_id) }}" method="POST">
-                            <button type="submit" class="request-btn">Request to Collect</button>
-                        </form>
+                    
+                        {% if requested_ids and post.postings_id in requested_ids %}
+                            <!-- If the user has requested this donation, show the Cancel Request button -->
+                            <form action="{{ url_for('cancel_request', post_id=post.postings_id) }}" method="POST">
+                                <button type="submit" class="cancel-btn">Cancel Request</button>
+                            </form>
+                        {% else %}
+                            <!-- Otherwise, show the Request to Collect button -->
+                            <form action="{{ url_for('request_collection', post_id=post.postings_id) }}" method="POST">
+                                <button type="submit" class="request-btn">Request to Collect</button>
+                            </form>
+                        {% endif %}
                     </div>
+                        
+
+
                 </li>
             {% endfor %}
         {% elif search or location %}
@@ -101,7 +126,79 @@
     // Attach input listeners for live search
     searchInput.addEventListener('input', handleLiveSearch);
     locationInput.addEventListener('input', handleLiveSearch);
+
+    // **Event Delegation**: Attach an event listener to the parent container `#donationList`
+    document.getElementById('donationList').addEventListener('click', function(event) {
+        // Check if the clicked element is a "Request to Collect" button
+        if (event.target && event.target.classList.contains('request-btn')) {
+            const button = event.target;
+            
+            // Disable the button and change the text to "Requesting..."
+            button.disabled = true;
+            button.innerHTML = "Requesting...";
+
+            // Get the form and action URL for the request
+            const form = button.closest('form');
+            const actionUrl = form.action;
+
+            // Send the POST request to request the collection
+            fetch(actionUrl, {
+                method: 'POST',
+                body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Change button text and class on success
+                    button.innerHTML = "Cancel Request";
+                    button.classList.remove('request-btn');
+                    button.classList.add('cancel-btn');  // Update to cancel button class
+                } else {
+                    button.innerHTML = "Error";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                button.innerHTML = "Error";
+            });
+        }
+
+        // Check if the clicked element is a "Cancel Request" button
+        if (event.target && event.target.classList.contains('cancel-btn')) {
+            const button = event.target;
+            
+            // Disable the button and change the text to "Canceling..."
+            button.disabled = true;
+            button.innerHTML = "Canceling...";
+
+            // Get the form and action URL for the cancel request
+            const form = button.closest('form');
+            const actionUrl = form.action;
+
+            // Send the POST request to cancel the collection request
+            fetch(actionUrl, {
+                method: 'POST',
+                body: new FormData(form)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Change button text and class on success
+                    button.innerHTML = "Request to Collect";
+                    button.classList.remove('cancel-btn');
+                    button.classList.add('request-btn');  // Update to request button class
+                } else {
+                    button.innerHTML = "Error";
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                button.innerHTML = "Error";
+            });
+        }
+    });
 </script>
+
 
 </body>
 </html>

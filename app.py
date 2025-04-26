@@ -1,13 +1,14 @@
 import sqlite3
 import logging
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
 from datetime import datetime
 from extensions import bcrypt, db
 from models.user import User
 from services import user_service
 from services.user_service import validate_user, get_user_by_email, create_user
 from utils import message_helper
+
 
 
 def register_routes(app):
@@ -535,6 +536,18 @@ def register_routes(app):
         total_postings = cursor.fetchone()['total_postings']
 
 
+        requested_ids = []
+
+        if 'user_id' in session:
+            cursor.execute("""
+                SELECT DISTINCT item_id
+                FROM postings_audit
+                WHERE requested_by_user_id = ? AND change_type = 'Requested'
+            """, (session['user_id'],))
+            requested_ids = [row['item_id'] for row in cursor.fetchall()]
+
+
+
         # Close the connection
         conn.close()
 
@@ -543,7 +556,7 @@ def register_routes(app):
         for post in posts:
             posts_list.append({
                 'postings_id': post['postings_id'],
-                'postings_title': post['post_title'],
+                'post_title': post['post_title'],
                 'description': post['description'],
                 'post_date': post['post_date'],
                 'pick_up_location': post['pick_up_location'],
@@ -556,22 +569,124 @@ def register_routes(app):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # AJAX request
             return jsonify({'posts': posts_list})
         else:
-            return render_template('discover.html', posts=posts_list, search=search_query, location=location, total_postings=total_postings)
+            return render_template('discover.html', posts=posts_list, search=search_query, location=location, total_postings=total_postings, requested_ids=requested_ids)
 
-
-
-    @app.route('/donation/<post_id>')
+    # View donations via discover page 042625
+    @app.route('/view_donation/<int:post_id>')
     def view_donation(post_id):
-        post = next((p for p in donation_posts if p['id'] == post_id), None)
-        if post:
-            return render_template('view_donation.html', post=post)
-        else:
-            return "Donation post not found", 404
+        conn = get_db_connection()
+        cursor = conn.cursor()
+    
+        cursor.execute("""
+            SELECT 
+                p.post_title AS title, 
+                p.description, 
+                p.post_date AS date_posted, 
+                p.pick_up_location AS location,
+                p.post_title AS category,        
+                u.fname || ' ' || u.lname AS username
+            FROM postings p
+            JOIN users u ON p.donor_user_id = u.user_id
+            WHERE p.postings_id = ?
+        """, (post_id,))
+    
+        post = cursor.fetchone()
+        conn.close()
 
-    @app.route('/request-collection/<post_id>', methods=['POST'])
+        if not post:
+            return "Donation not found", 404
+
+        return render_template('view_donation.html', post=post)
+
+    @app.route('/request_collection/<int:post_id>', methods=['POST'])
     def request_collection(post_id):
-        print(f"Collection requested for post: {post_id}")
-        return redirect(url_for('discover'))
+        user_id = session.get('user_id')  # Or use Flask-Login's current_user.id
+
+        if not user_id:
+            return jsonify({'success': False, 'message': 'You must be logged in to request a donation.'})
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get original post data (and donor)
+        cursor.execute("""
+            SELECT p.*, u.user_id AS donor_user_id 
+            FROM postings p
+            JOIN users u ON p.donor_user_id = u.user_id
+            WHERE p.postings_id = ?
+        """, (post_id,))
+        post = cursor.fetchone()
+
+        if not post:
+            conn.close()
+            return jsonify({'success': False, 'message': 'Donation not found.'})
+
+        # Check if user already requested this post (by searching audit records)
+        cursor.execute("""
+            SELECT 1 FROM postings_audit
+            WHERE item_id = ? AND requested_by_user_id = ? AND change_type = 'Requested'
+        """, (post_id, user_id))
+        existing = cursor.fetchone()
+
+        if existing:
+            conn.close()
+            return jsonify({'success': False, 'message': 'You already requested this donation.'})
+
+        # Log the request into the audit table
+        cursor.execute("""
+            INSERT INTO postings_audit (
+                posted_by_user_id,
+                requested_by_user_id,
+                post_title,
+                description,
+                post_status,
+                post_date,
+                collection_date,
+                item_id,
+                quantity,
+                pick_up_location,
+                approve_reject_date,
+                change_type
+            ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+        """, (
+            post['donor_user_id'],
+            user_id,
+            post['post_title'],
+            post['description'],
+            post['post_status'],
+            post['post_date'],
+            post['item_id'],
+            post['quantity'],
+            post['pick_up_location'],
+            'Requested'
+        ))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Your request has been submitted!', 'button_text': 'Cancel Request'})
+
+    @app.route('/cancel_request/<int:post_id>', methods=['POST'])
+    def cancel_request(post_id):
+        user_id = session.get('user_id')  # Or use Flask-Login's current_user.id
+
+        if not user_id:
+            return jsonify({'success': False, 'message': 'You must be logged in to cancel a request.'})
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Remove the request record from the postings_audit table
+        cursor.execute("""
+            DELETE FROM postings_audit
+            WHERE item_id = ? AND requested_by_user_id = ? AND change_type = 'Requested'
+        """, (post_id, user_id))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Your request has been canceled.', 'button_text': 'Request to Collect'})
+    
 
 
 def create_app():
