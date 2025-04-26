@@ -251,12 +251,10 @@ def register_routes(app):
                     c.collector_user_id,
                     c.connection_status,
                     u1.fname || ' ' || u1.lname AS donor_name,
-                    u2.fname || ' ' || u2.lname AS collector_name,
-                    postings.post_title       
+                    u2.fname || ' ' || u2.lname AS collector_name
                 FROM connections c
                 JOIN users u1 ON u1.user_id = c.donor_user_id
                 JOIN users u2 ON u2.user_id = c.collector_user_id
-                LEFT JOIN postings ON c.postings_id = postings.postings_id  -- Join with postings to get the post title
                 WHERE c.connection_status = 'Active' AND c.donor_user_id = ?
             """, (session["user_id"],))
             connection_rows = cursor.fetchall()
@@ -289,8 +287,7 @@ def register_routes(app):
             requests = [{
                 'donor_name': row['donor_name'],
                 'collector_name': row['collector_name'],
-                'connection_status': row['connection_status'],
-                'post_title': row['post_title']  # Adding the post title here
+                'connection_status': row['connection_status']
             } for row in connection_rows]
 
 
@@ -299,7 +296,6 @@ def register_routes(app):
             total_impact_score = 0
             for row in impact_rows:
                 impact_donations.append({
-                    'post_title': row['post_title'],
                     'score': row['score'],
                     'post_date': row['post_date'],
                     'pick_up_location': row['pick_up_location']
@@ -365,75 +361,6 @@ def register_routes(app):
         print("Impact route hit", flush=True)
         user_id = session['user_id']  # Assuming the user is logged in and their ID is in the session
 
-<<<<<<< HEAD
-
-    @app.route('/connections')
-    def connections():
-        if 'user_email' in session:
-            user_id = session['user_id']
-
-            conn = get_db_connection()
-            cursor = conn.cursor()
-
-            cursor.execute("""
-                SELECT DISTINCT u.user_id, u.fname, u.lname, u.email
-                FROM users u
-                JOIN postings p ON u.user_id = p.donor_user_id
-                WHERE p.collector_by_user_id = ?
-                UNION
-                SELECT DISTINCT u.user_id, u.fname, u.lname, u.email
-                FROM users u
-                JOIN postings p ON u.user_id = p.collector_by_user_id
-                WHERE p.donor_user_id = ?;
-            """, (user_id, user_id))
-
-            connections = cursor.fetchall()
-            conn.close()
-
-            return render_template('connections.html', connections=connections)
-        else:
-            return redirect(url_for('login'))
-
-
-=======
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Query to fetch the donations posted by the user, including the score for each donation
-        cursor.execute("""
-            SELECT 
-                p.postings_id, 
-                p.post_title, 
-                p.post_date, 
-                p.pick_up_location, 
-                p.score
-            FROM postings p
-            WHERE p.donor_user_id = ? AND p.is_deleted = 0
-        """, (user_id,))
-
-        rows = cursor.fetchall()
-
-        print(f"[DEBUG] Rows fetched from DB: {rows}", flush=True)  # Debug print for raw DB output
-
-        # Prepare the donations data for the template
-        donations = []
-        total_score = 0  # Initialize total_score
-
-        for row in rows:
-            donations.append({
-                'post_title': row['post_title'],
-                'score': row['score'],
-                'post_date': row['post_date'],
-                'pick_up_location': row['pick_up_location']
-            })
-            print(f"[DEBUG] Donation data being added: {donations[-1]}")  # Debug print
-            total_score += row['score']  # Accumulate the score
-
-        print(f"[DEBUG] Total Impact Score: {total_score}")  # Debug print
-        conn.close()
-
-        # Pass the donations data to the template
-        return render_template('impact.html', donations=donations, total_score=total_score)
 
     #IVY CODE FOR CONNECTIONS
     @app.route('/connections')
