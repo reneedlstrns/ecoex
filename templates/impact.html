@@ -1,32 +1,25 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
+<h2 class="page-title">Your Donation Impact</h2>
+<p class="highlight">You have gained a total impact score of {{ total_score }}.</p>
 
-    <div class="impact-section">
-        <h2 class="page-title">Impact</h2>
-        <p class="highlight">You have gained a total impact score of {{ total_score }}.</p>
+<div class="donation-scroll-wrapper">
+    <div class="donations-list">
 
-        
         {% if donations %}
-            <div class="impact-scroll-wrapper">
-                <ul class="donation-list">
-                    {% for donation in donations %}
-                        <li class="donation-card">
-                            <h3 class="donation-title">{{ donation.post_title }}</h3>
-                            <p><strong>Posted on:</strong> {{ donation.post_date }}</p>
-                            <p><strong>Location:</strong> {{ donation.pick_up_location }}</p>
-                            <p><strong>Score Earned:</strong> {{ donation.score }}</p>
-                        </li>
-                    {% endfor %}
-                </ul>
-            </div>
+        <ul class="donation-list">
+            {% for donation in donations %}
+            <li class="donation-item">
+                <h3>{{ donation.post_title }}</h3>
+                <p><strong>Posted on:</strong> {{ donation.post_date }}</p>
+                <p><strong>Location:</strong> {{ donation.pick_up_location }}</p>
+                <p><strong>Score Earned:</strong> 
+                    <span class="score-badge">{{ donation.score }}</span>
+                </p>
+            </li>
+            {% endfor %}
+        </ul>
         {% else %}
-            <p>No conversions made yet.</p>
+        <p class="no-donations">No donations have been made yet.</p>
         {% endif %}
+
     </div>
-</body>
-</html>
+</div>

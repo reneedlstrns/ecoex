@@ -297,6 +297,7 @@ def register_routes(app):
             total_impact_score = 0
             for row in impact_rows:
                 impact_donations.append({
+                    'post_title': row['post_title'],
                     'score': row['score'],
                     'post_date': row['post_date'],
                     'pick_up_location': row['pick_up_location']
@@ -361,6 +362,45 @@ def register_routes(app):
     def impact():
         print("Impact route hit", flush=True)
         user_id = session['user_id']  # Assuming the user is logged in and their ID is in the session
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Query to fetch the donations posted by the user, including the score for each donation
+        cursor.execute("""
+            SELECT 
+                p.postings_id, 
+                p.post_title, 
+                p.post_date, 
+                p.pick_up_location, 
+                p.score
+            FROM postings p
+            WHERE p.donor_user_id = ? AND p.is_deleted = 0
+        """, (user_id,))
+             
+        rows = cursor.fetchall()
+
+        print(f"[DEBUG] Rows fetched from DB: {rows}", flush=True)  # Debug print for raw DB output
+
+        # Prepare the donations data for the template
+        donations = []
+        total_score = 0  # Initialize total_score
+
+        for row in rows:
+            donations.append({
+                'post_title': row['post_title'],
+                'score': row['score'],
+                'post_date': row['post_date'],
+                'pick_up_location': row['pick_up_location']
+            })
+            print(f"[DEBUG] Donation data being added: {donations[-1]}")  # Debug print
+            total_score += row['score']  # Accumulate the score
+
+        print(f"[DEBUG] Total Impact Score: {total_score}")  # Debug print        
+        conn.close()
+
+        # Pass the donations data to the template
+        return render_template('impact.html', donations=donations, total_score=total_score)
 
 
     #IVY CODE FOR CONNECTIONS
@@ -488,43 +528,13 @@ def register_routes(app):
     #IVY CODE FOR DISCOVER
     @app.route('/discover', methods=['GET'])
     def discover():
-        # Get filter parameters from the request (search, category, location)
-        search_query = request.args.get('search', '').lower()
-        category = request.args.get('category', '').lower()
-        location = request.args.get('location', '').lower()
-
-         # Query the database for posts that are not deleted
-        filtered_posts = Postings.query.filter(Postings.is_deleted == False)
-
-        # Apply search filter on title and description
-        if search_query:
-            filtered_posts = filtered_posts.filter(
-                (Postings.post_title.ilike(f'%{search_query}%')) |
-                (Postings.description.ilike(f'%{search_query}%'))
-            )
-
-        # Apply category filter (assuming 'category' is stored in 'post_title' or a related column)
-        if category:
-            filtered_posts = filtered_posts.filter(
-                Postings.post_title.ilike(f'%{category}%')
-            )
-
-            return render_template('discover.html', posts=filtered_posts, search=search_query, category=category,
-                                   donation_posts=donation_posts)
-        # Apply location filter (assuming 'location' is stored in 'pick_up_location' or a related column)
-        if location:
-            filtered_posts = filtered_posts.filter(
-                Postings.pick_up_location.ilike(f'%{location}%')
-            )
-
-        # Execute the query and get the filtered list of posts
-        filtered_posts = filtered_posts.all()
-
-        # Render the template with the filtered posts and search params
-        return render_template('discover.html', posts=filtered_posts, search=search_query, category=category, location=location)
         # Fetching query parameters from URL for filtering
         search_query = request.args.get('search', '').lower()  # Search term for title and description
         location = request.args.get('location', '').lower()   # Location filter
+
+        # Debugging: Print the values of search_query and location
+        print("Search query:", search_query)
+        print("Location:", location)
 
         # Establish database connection
         conn = get_db_connection()
@@ -538,8 +548,7 @@ def register_routes(app):
                 p.description, 
                 p.post_date, 
                 p.pick_up_location, 
-                u.fname || ' ' || u.lname AS username, 
-                u.location_title AS location
+                u.fname || ' ' || u.lname AS username
             FROM postings p
             JOIN users u ON p.donor_user_id = u.user_id
             WHERE p.post_status = 'New' 
@@ -556,6 +565,10 @@ def register_routes(app):
             query += " AND LOWER(p.pick_up_location) LIKE ?"
             filters.append(f'%{location}%')
 
+        # Debugging: Print the final query and filters
+        print("Final SQL query:", query)
+        print("Filters:", filters)    
+
         # Execute the query with filters
         cursor.execute(query, filters)
         posts = cursor.fetchall()
@@ -569,6 +582,18 @@ def register_routes(app):
         total_postings = cursor.fetchone()['total_postings']
 
 
+        requested_ids = []
+
+        if 'user_id' in session:
+            cursor.execute("""
+                SELECT DISTINCT item_id
+                FROM postings_audit
+                WHERE requested_by_user_id = ? AND change_type = 'Requested'
+            """, (session['user_id'],))
+            requested_ids = [row['item_id'] for row in cursor.fetchall()]
+
+
+
         # Close the connection
         conn.close()
 
@@ -576,35 +601,137 @@ def register_routes(app):
         posts_list = []
         for post in posts:
             posts_list.append({
-                'id': post['postings_id'],
-                'title': post['post_title'],
+                'postings_id': post['postings_id'],
+                'post_title': post['post_title'],
                 'description': post['description'],
-                'date_posted': post['post_date'],
-                'location': post['pick_up_location'],
-                'username': post['username'],
-                'location_title': post['location'],
+                'post_date': post['post_date'],
+                'pick_up_location': post['pick_up_location'],
+                'username': post['username']
             })
+        # Debugging: Print the posts list to see if data is being fetched correctly
+        print("Posts List:", posts_list)    
 
         # If it's an AJAX request, return JSON, else render the template
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # AJAX request
             return jsonify({'posts': posts_list})
         else:
-            return render_template('discover.html', posts=posts_list, search=search_query, location=location, total_postings=total_postings)
+            return render_template('discover.html', posts=posts_list, search=search_query, location=location, total_postings=total_postings, requested_ids=requested_ids)
 
-
-
-    @app.route('/donation/<post_id>')
+    # View donations via discover page 042625
+    @app.route('/view_donation/<int:post_id>')
     def view_donation(post_id):
-        post = next((p for p in donation_posts if p['id'] == post_id), None)
-        if post:
-            return render_template('view_donation.html', post=post)
-        else:
-            return "Donation post not found", 404
+        conn = get_db_connection()
+        cursor = conn.cursor()
+    
+        cursor.execute("""
+            SELECT 
+                p.post_title AS title, 
+                p.description, 
+                p.post_date AS date_posted, 
+                p.pick_up_location AS location,
+                p.post_title AS category,        
+                u.fname || ' ' || u.lname AS username
+            FROM postings p
+            JOIN users u ON p.donor_user_id = u.user_id
+            WHERE p.postings_id = ?
+        """, (post_id,))
+    
+        post = cursor.fetchone()
+        conn.close()
 
-    @app.route('/request-collection/<post_id>', methods=['POST'])
+        if not post:
+            return "Donation not found", 404
+
+        return render_template('view_donation.html', post=post)
+
+    @app.route('/request_collection/<int:post_id>', methods=['POST'])
     def request_collection(post_id):
-        print(f"Collection requested for post: {post_id}")
-        return redirect(url_for('discover'))
+        user_id = session.get('user_id')  # Or use Flask-Login's current_user.id
+
+        if not user_id:
+            return jsonify({'success': False, 'message': 'You must be logged in to request a donation.'})
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Get original post data (and donor)
+        cursor.execute("""
+            SELECT p.*, u.user_id AS donor_user_id 
+            FROM postings p
+            JOIN users u ON p.donor_user_id = u.user_id
+            WHERE p.postings_id = ?
+        """, (post_id,))
+        post = cursor.fetchone()
+
+        if not post:
+            conn.close()
+            return jsonify({'success': False, 'message': 'Donation not found.'})
+
+        # Check if user already requested this post (by searching audit records)
+        cursor.execute("""
+            SELECT 1 FROM postings_audit
+            WHERE item_id = ? AND requested_by_user_id = ? AND change_type = 'Requested'
+        """, (post_id, user_id))
+        existing = cursor.fetchone()
+
+        if existing:
+            conn.close()
+            return jsonify({'success': False, 'message': 'You already requested this donation.'})
+
+        # Log the request into the audit table
+        cursor.execute("""
+            INSERT INTO postings_audit (
+                posted_by_user_id,
+                requested_by_user_id,
+                post_title,
+                description,
+                post_status,
+                post_date,
+                collection_date,
+                item_id,
+                quantity,
+                pick_up_location,
+                approve_reject_date,
+                change_type
+            ) VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP, ?, ?, ?, CURRENT_TIMESTAMP, ?)
+        """, (
+            post['donor_user_id'],
+            user_id,
+            post['post_title'],
+            post['description'],
+            post['post_status'],
+            post['post_date'],
+            post['item_id'],
+            post['quantity'],
+            post['pick_up_location'],
+            'Requested'
+        ))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Your request has been submitted!', 'button_text': 'Cancel Request'})
+
+    @app.route('/cancel_request/<int:post_id>', methods=['POST'])
+    def cancel_request(post_id):
+        user_id = session.get('user_id')  # Or use Flask-Login's current_user.id
+
+        if not user_id:
+            return jsonify({'success': False, 'message': 'You must be logged in to cancel a request.'})
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Remove the request record from the postings_audit table
+        cursor.execute("""
+            DELETE FROM postings_audit
+            WHERE item_id = ? AND requested_by_user_id = ? AND change_type = 'Requested'
+        """, (post_id, user_id))
+
+        conn.commit()
+        conn.close()
+
+        return jsonify({'success': True, 'message': 'Your request has been canceled.', 'button_text': 'Request to Collect'})
 
 
 def create_app():

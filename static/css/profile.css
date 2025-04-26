@@ -1,32 +1,29 @@
-/* static/css/profile.css */
 
-html {
-    color-scheme: light dark;
-}
-
+/* Profile Section */
 .profile-details {
     display: flex;
-    flex-direction: column; /* Stack items vertically */
-    gap: 10px; /* Add spacing between items */
+    flex-direction: column;
+    gap: 10px;
     background-color: #FFFFFF;
     color: #000000;
     padding: 20px;
     width: 60%;
-    margin: 20px auto; /* Center the container with spacing */
+    margin: 20px auto;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border: 1px solid #ddd;
     line-height: 1.6;
+    text-align: left;
 }
 
 .profile-details p {
-    margin: 0; /* Remove extra margin */
-    font-size: 1rem; /* Match font size */
+    margin: 0;
+    font-size: 1rem;
 }
 
 .profile-details p strong {
     font-weight: bold;
     display: inline-block;
-    width: 150px; /* Align labels consistently */
+    width: 150px;
 }
 
 #editProfileForm {
@@ -61,23 +58,23 @@ html {
 }
 
 .form-control {
-    text-align: left; /* Ensure text inside input is left-aligned */
+    text-align: left;
     font-size: 1.0rem;
-    width: 100%; /* Make input fields take the full width of their container */
-    box-sizing: border-box; /* Include padding and border in the element's total width */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .row .col-md-6 {
     display: flex;
-    flex-direction: column; /* Stack label and input vertically */
-    gap: 5px; /* Add spacing between label and input */
+    flex-direction: column;
+    gap: 5px;
 }
 
 .row {
     margin-bottom: 20px;
     display: flex;
-    justify-content: space-between; /* Distribute columns evenly */
-    gap: 20px; /* Add spacing between columns */
+    justify-content: space-between;
+    gap: 20px;
 }
 
 .btn-primary {
@@ -87,7 +84,7 @@ html {
     border: none;
     font-size: 16px;
     cursor: pointer;
-    margin: 20px auto; /* Center the button */
+    margin: 20px auto;
 }
 
 .btn-primary:hover {
@@ -100,9 +97,9 @@ html {
 }
 
 .form-label {
-    text-align: left; /* Align label text to the left */
+    text-align: left;
     font-weight: bold;
-    font-size: 1.2rem; /* Slightly larger font size */
+    font-size: 1.2rem;
 }
 
 .profile-details {
@@ -119,12 +116,281 @@ html {
     line-height: 1.6;
 }
 
-
 .sidebar .profile h2 {
     text-align: left;
-    margin-left: 0; /* Ensure no extra margin is added */
+    margin-left: 0;
 }
 
-#editProfileModal {
-    display: none;
+/* Sidebar */
+.sidebar {
+    position: absolute;
+    left: 30px;
+    top: 60%;
+    transform: translateY(-50%);
+    width: 260px;
+    color: #006d57;
+    background: #f3f4e7;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 15px;
+    height: fit-content;
+}
+
+.sidebar-menu {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+}
+
+.sidebar-menu li {
+    margin-bottom: 10px;
+    text-align: center;
+}
+
+.sidebar-menu li a {
+    text-decoration: none;
+    color: white;
+    display: block;
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 5px;
+    background-color: #004d40;
+}
+
+.sidebar-menu li a:hover {
+    font-weight: bold;
+}
+
+.sidebar-menu li a.active {
+    border: 2px solid #B2BC39;
+    background-color: #004d40;
+}
+
+/* Connections Section */
+.request-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.request-card {
+    background-color: #ffffff;
+    border: 1px solid #cccccc;
+    border-left: 5px solid #4CAF50;
+    border-radius: 8px;
+    padding: 15px 20px;
+    margin-bottom: 15px;
+    text-align: left;
+    transition: box-shadow 0.3s ease;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.request-card:hover {
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.request-card p {
+    font-size: 16px;
+    margin: 0 0 6px 0;
+}
+
+.request-card small {
+    color: #888;
+    font-size: 13px;
+}
+
+.request-actions {
+    margin-top: 10px;
+}
+
+.request-actions button {
+    margin-right: 10px;
+    padding: 6px 14px;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+/* Button Colors */
+.request-actions button:nth-child(1) {
+    background-color: #2196F3;
+    color: white;
+}
+
+.request-actions button:nth-child(2) {
+    background-color: #f44336;
+    color: white;
+}
+
+.request-actions button:nth-child(3) {
+    background-color: #4CAF50;
+    color: white;
+}
+
+.request-actions button:hover {
+    opacity: 0.9;
+}
+
+/* Donation and Impact Section */
+.donation-section {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.donation-search {
+    margin-bottom: 30px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+}
+
+.donation-search input[type="text"],
+.donation-search select {
+    padding: 10px 15px;
+    font-size: 16px;
+    border: 2px solid #006d57;
+    border-radius: 8px;
+    outline: none;
+    min-width: 220px;
+}
+
+.donation-search button {
+    background-color: #006d57;
+    color: white;
+    padding: 10px 18px;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.donation-search button:hover {
+    background-color: #004d40;
+}
+
+/* Donation List */
+.donation-list {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+}
+
+.donation-card {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-left: 5px solid #4CAF50;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05);
+    text-align: left;
+    transition: box-shadow 0.3s ease;
+}
+
+.donation-card:hover {
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.donation-card h3 {
+    margin-top: 0;
+    color: #006d57;
+    font-size: 20px;
+}
+
+.donation-card p {
+    margin: 8px 0;
+    font-size: 15px;
+}
+
+.request-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 10px;
+    transition: background-color 0.3s ease;
+}
+
+.request-btn:hover {
+    background-color: #45a049;
+}
+
+/* Scroll Wrappers */
+.impact-scroll-wrapper,
+.donation-scroll-wrapper {
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 10px;
+    margin-top: 20px;
+}
+
+.impact-scroll-wrapper::-webkit-scrollbar,
+.donation-scroll-wrapper::-webkit-scrollbar {
+    width: 8px;
+}
+
+.impact-scroll-wrapper::-webkit-scrollbar-thumb,
+.donation-scroll-wrapper::-webkit-scrollbar-thumb {
+    background-color: #ccc;
+    border-radius: 10px;
+}
+
+.impact-scroll-wrapper::-webkit-scrollbar-thumb:hover,
+.donation-scroll-wrapper::-webkit-scrollbar-thumb:hover {
+    background-color: #999;
+}
+
+.flash-messages {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    width: 100%;
+}
+
+.flash-message {
+    padding: 10px 20px;
+    margin: 10px 0;
+    border-radius: 5px;
+    font-size: 16px;
+    display: inline-block;
+    width: auto;
+}
+
+.flash-message.success {
+    background-color: #28a745;
+    color: white;
+    border: 1px solid #28a745;
+}
+
+.flash-message.danger {
+    background-color: #dc3545;
+    color: white;
+    border: 1px solid #dc3545;
+}
+
+.flash-message.warning {
+    background-color: #ffc107;
+    color: black;
+    border: 1px solid #ffc107;
+}
+
+/* Sticky Search */
+.sticky-search {
+    position: sticky;
+    top: 95px;
+    z-index: 10;
+    background-color: #f6f6f6;
+    padding: 15px 0;
+    border-bottom: 1px solid #ccc;
 }
