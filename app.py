@@ -567,6 +567,7 @@ def create_app():
         # Register routes
         register_routes(app)
 
+        return app
 
 
 # RUN THE FLASK APP
