@@ -7,7 +7,7 @@
     background-color: #FFFFFF;
     color: #000000;
     padding: 20px;
-    width: 60%;
+    width: 100%;
     margin: 20px auto;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border: 1px solid #ddd;
@@ -35,7 +35,7 @@
     background-color: #FFFFFF;
     color: #000000;
     padding: 20px;
-    width: 60%;
+    width: 100%;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     z-index: 1000;
 }
@@ -393,4 +393,213 @@
     background-color: #f6f6f6;
     padding: 15px 0;
     border-bottom: 1px solid #ccc;
+}
+/* Profile Edit Form Styles */
+.profile-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #FFFFFF;
+    color: #000000;
+    padding: 20px;
+    width: 80%;
+    max-width: 900px; /* Set a max width to ensure the form doesn't get too wide */
+    margin: 20px auto;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid #ddd;
+    line-height: 1.6;
+}
+
+
+.profile-details h2 {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #006d57;
+}
+
+.profile-details form {
+    width: 100%;
+}
+
+.row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.row .col-md-6 {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 48%; /* Slightly adjusted to make columns fit */
+}
+
+.form-label {
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.form-control {
+    padding: 10px;
+    font-size: 1rem;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #f8f8f8;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.form-control:focus {
+    border-color: #006d57;
+    outline: none;
+    background-color: #ffffff;
+}
+
+button.btn-primary {
+    background-color: #006d57;
+    color: white;
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: 100%;
+    margin-top: 20px;
+}
+
+button.btn-primary:hover {
+    background-color: #004d40;
+}
+
+button.btn-primary:active {
+    background-color: #003b32;
+}
+
+/* Modal Styles for Success and Error Messages */
+.modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1001;
+    max-width: 400px;
+    width: 90%;
+    text-align: center;
+}
+
+.modal-content {
+    padding: 20px;
+}
+
+.modal .close {
+    font-size: 20px;
+    cursor: pointer;
+    color: #333;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+.modal .close:hover {
+    color: #006d57;
+}
+
+/* Flash message styles */
+.flash-message {
+    margin-top: 20px;
+    padding: 15px;
+    border-radius: 5px;
+    font-size: 16px;
+}
+
+.flash-message.success {
+    background-color: #28a745;
+    color: white;
+    border: 1px solid #28a745;
+}
+
+.flash-message.error {
+    background-color: #dc3545;
+    color: white;
+    border: 1px solid #dc3545;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .profile-details {
+        width: 90%;
+    }
+    .row {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .col-md-6 {
+        width: 100%;
+    }
+    .content-container {
+        margin-left: 0;
+        padding: 10px;
+    }
+    .sidebar {
+        position: static;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+}
+.myprofile-details {
+    background-color: #f5fdf7; /* light eco-green background */
+    color: #222;
+    padding: 40px;
+    border-radius: 12px;
+    border: 1px solid #cce3d8;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    max-width: 1000px;
+    margin: 0 auto;
+    line-height: 1.8;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+
+
+.myprofile-details:hover {
+    background-color: #e9f8f0; /* slightly brighter on hover */
+}
+
+.myprofile-details .row {
+    margin-bottom: 25px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.myprofile-details .form-label {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #1e3d2f; /* deep forest green */
+    margin-bottom: 5px;
+}
+
+.myprofile-details p {
+    background-color: #ffffff;
+    border: 1px solid #dce9e1;
+    padding: 12px 16px;
+    border-radius: 6px;
+    margin: 0;
+    font-size: 1rem;
+    color: #333;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.03);
+    word-break: break-word;
+}
+#usergreeting {
+    text-align: center;
+    color: #006d57;
+    font-weight: bold;
+    margin-top: 10px;
 }

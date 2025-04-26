@@ -10,7 +10,7 @@
         <div class="profile text-center mb-4">
             <img src="{{ url_for('static', filename='media/profilesample1.jpg') }}" alt="User Profile"
                  class="img-fluid rounded-circle mb-2">
-            <h2>
+            <h2 id="usergreeting">
                 {% if user %}
                 Hi, {{ user.nick_name }}!
                 {% else %}
