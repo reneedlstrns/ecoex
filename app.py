@@ -5,6 +5,7 @@ from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
 from extensions import bcrypt, db
 from models.user import User
+from models.postings import Postings
 from services import user_service
 from services.user_service import validate_user, get_user_by_email, create_user
 from utils import message_helper
@@ -443,7 +444,7 @@ def register_routes(app):
                 "INSERT INTO postings (donor_user_id, post_title, quantity, pick_up_location, description, post_status, post_date, item_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (session["user_id"], title, quantity, pick_up_location, description, "new", post_date, item_id))
 
-            new_posting_id = cursor.lastrowid  # Get the inserted posting ID
+            new_posting_id = cursor.lastrowid  # Get the inserted Postings ID
 
             # Insert into `postings_audit` table
             cursor.execute(
@@ -493,19 +494,19 @@ def register_routes(app):
         location = request.args.get('location', '').lower()
 
          # Query the database for posts that are not deleted
-        filtered_posts = Posting.query.filter(Posting.is_deleted == False)
+        filtered_posts = Postings.query.filter(Postings.is_deleted == False)
 
         # Apply search filter on title and description
         if search_query:
             filtered_posts = filtered_posts.filter(
-                (Posting.post_title.ilike(f'%{search_query}%')) |
-                (Posting.description.ilike(f'%{search_query}%'))
+                (Postings.post_title.ilike(f'%{search_query}%')) |
+                (Postings.description.ilike(f'%{search_query}%'))
             )
 
         # Apply category filter (assuming 'category' is stored in 'post_title' or a related column)
         if category:
             filtered_posts = filtered_posts.filter(
-                Posting.post_title.ilike(f'%{category}%')
+                Postings.post_title.ilike(f'%{category}%')
             )
 
             return render_template('discover.html', posts=filtered_posts, search=search_query, category=category,
@@ -513,7 +514,7 @@ def register_routes(app):
         # Apply location filter (assuming 'location' is stored in 'pick_up_location' or a related column)
         if location:
             filtered_posts = filtered_posts.filter(
-                Posting.pick_up_location.ilike(f'%{location}%')
+                Postings.pick_up_location.ilike(f'%{location}%')
             )
 
         # Execute the query and get the filtered list of posts
