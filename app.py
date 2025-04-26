@@ -204,12 +204,10 @@ def register_routes(app):
                     c.collector_user_id,
                     c.connection_status,
                     u1.fname || ' ' || u1.lname AS donor_name,
-                    u2.fname || ' ' || u2.lname AS collector_name,
-                    postings.post_title       
+                    u2.fname || ' ' || u2.lname AS collector_name       
                 FROM connections c
                 JOIN users u1 ON u1.user_id = c.donor_user_id
                 JOIN users u2 ON u2.user_id = c.collector_user_id
-                LEFT JOIN postings ON c.postings_id = postings.postings_id  -- Join with postings to get the post title
                 WHERE c.connection_status = 'Active' AND c.donor_user_id = ?
             """, (session["user_id"],))
             connection_rows = cursor.fetchall()
@@ -243,7 +241,6 @@ def register_routes(app):
                 'donor_name': row['donor_name'],
                 'collector_name': row['collector_name'],
                 'connection_status': row['connection_status'],
-                'post_title': row['post_title']  # Adding the post title here
             } for row in connection_rows]
 
 
@@ -710,11 +707,12 @@ app = create_app()
 
 # Database Connection
 def get_db_connection():
-    db_path = os.path.join(app.instance_path, 'ecoexchange.db')
+    db_path = r'C:\Users\User\Documents\GitHub\ecoex\instance\ecoexchange.db'
     conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     print(f"✅ Connected to: {db_path}")
     return conn
+
 
 
 
