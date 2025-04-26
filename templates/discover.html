@@ -54,10 +54,16 @@
         {% for post in posts %}
         <li class="donation-card">
             <h3>{{ post.title }}</h3>
+<<<<<<< HEAD
+            <p><strong>Category:</strong> {{ post.item_type }}</p>
+            <p>{{ post.description }}</p>
+<p><strong>Uploaded by:</strong> {{ post.username }} from {{ post.location }}</p>
+=======
             <p><strong>Description:</strong> {{ post.description }}</p>
             <p><strong>Location:</strong> {{ post.location }}</p>
             <p><strong>Uploaded by:</strong> {{ post.username }}</p>
             <p><strong>Posted on:</strong> {{ post.date_posted }}</p>
+>>>>>>> 71379b21b9863e0553111f63ee596f2004041649
 
             <div class="donation-actions">
                 <a href="{{ url_for('view_donation', post_id=post.id) }}" class="view-btn">View</a>

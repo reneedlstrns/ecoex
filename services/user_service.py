@@ -131,3 +131,29 @@ def is_valid_email(email):
 
     # If all conditions are met, return True
     return True
+
+
+def update_user(user_id, nick_name, fname, lname, mobile, location_title, address, city, company):
+    try:
+        # Retrieve the user by ID
+        user = User.query.get(user_id)
+        if not user:
+            return {'error': message_helper.ERROR_USER_NOT_FOUND}
+
+        # Update user attributes
+        user.nick_name = nick_name
+        user.fname = fname
+        user.lname = lname
+        user.mobile = mobile
+        user.location_title = location_title
+        user.address = address
+        user.city = city
+        user.company = company
+
+        # Commit changes to the database
+        db.session.commit()
+
+        return {'message': message_helper.SUCCESS_PROFILE_UPDATED, 'user': user.to_dict()}
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return {'error': str(e)}

@@ -1,9 +1,11 @@
 import sqlite3
 import logging
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
 from extensions import bcrypt, db
 from models.user import User
+from models.postings import Postings
 from services import user_service
 from services.user_service import validate_user, get_user_by_email, create_user
 from utils import message_helper
@@ -30,6 +32,36 @@ def register_routes(app):
     def logout():
         session.pop('user_email', None)
         return redirect(url_for('index'))
+
+    @app.route("/updateProfile", methods=["POST"])
+    def update_profile():
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+
+        user_id = session['user_id']
+        user = db.session.get(User, session['user_id'])
+        if not user:
+            return redirect(url_for('edit_profile', error_message=message_helper.ERROR_USER_NOT_FOUND))
+
+        data = request.form
+        nick_name = data.get('nick_name')
+        fname = data.get('fname')
+        lname = data.get('lname')
+        mobile = data.get('mobile')
+        location_title = data.get('location_title')
+        address = data.get('address')
+        city = data.get('city')
+        company = data.get('company')
+
+        if not nick_name or not fname or not lname or not mobile or not location_title or not address or not city:
+            return redirect(url_for('edit_profile', error_message=message_helper.ERROR_FILL_ALL_REQUIRED_FIELDS))
+
+        response = user_service.update_user(user_id, nick_name, fname, lname, mobile, location_title, address, city,
+                                            company)
+        if 'error' in response:
+            return redirect(url_for('edit_profile', error_message=response['error']))
+
+        return redirect(url_for('myprofile', success_message=message_helper.SUCCESS_PROFILE_UPDATED))
 
 
     @app.route("/register", methods=["GET", "POST"])
@@ -168,14 +200,32 @@ def register_routes(app):
     def index():
         return render_template('index.html')
 
-    @app.route('/editprofile')
+    @app.route('/editProfile', methods=['GET'])
     def edit_profile():
-        return render_template('editprofile.html')
+        if 'user_id' not in session:
+            return redirect(url_for('login'))  # Redirect to login if user is not logged in
+
+        try:
+            # Retrieve the user by ID from the session
+            user_id = session['user_id']
+            user = User.query.get(user_id)
+            if not user:
+                return "User not found", 404
+
+            # Pass the user object to the template
+            return render_template('editprofile.html', user=user)
+        except Exception as e:
+            print(f"Error occurred: {e}")
+            return "An error occurred", 500
+
 
     @app.route("/myprofile")
     def myprofile():
-        if 'user_email' in session:
-            user = get_user_by_email(session['user_email'])
+        success_message = request.args.get("success_message", None)
+        error_message = request.args.get("error_message", None)
+
+        if 'user_id' in session:
+            user = User.query.get(session['user_id'])
 
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -202,12 +252,10 @@ def register_routes(app):
                     c.collector_user_id,
                     c.connection_status,
                     u1.fname || ' ' || u1.lname AS donor_name,
-                    u2.fname || ' ' || u2.lname AS collector_name,
-                    postings.post_title       
+                    u2.fname || ' ' || u2.lname AS collector_name
                 FROM connections c
                 JOIN users u1 ON u1.user_id = c.donor_user_id
                 JOIN users u2 ON u2.user_id = c.collector_user_id
-                LEFT JOIN postings ON c.postings_id = postings.postings_id  -- Join with postings to get the post title
                 WHERE c.connection_status = 'Active' AND c.donor_user_id = ?
             """, (session["user_id"],))
             connection_rows = cursor.fetchall()
@@ -240,8 +288,7 @@ def register_routes(app):
             requests = [{
                 'donor_name': row['donor_name'],
                 'collector_name': row['collector_name'],
-                'connection_status': row['connection_status'],
-                'post_title': row['post_title']  # Adding the post title here
+                'connection_status': row['connection_status']
             } for row in connection_rows]
 
 
@@ -250,7 +297,6 @@ def register_routes(app):
             total_impact_score = 0
             for row in impact_rows:
                 impact_donations.append({
-                    'post_title': row['post_title'],
                     'score': row['score'],
                     'post_date': row['post_date'],
                     'pick_up_location': row['pick_up_location']
@@ -299,7 +345,7 @@ def register_routes(app):
 
         donations = cursor.fetchall()
         total_postings = len(donations)
- 
+
         print(f"[DEBUG] User ID: {user_id}, Total Donations: {total_postings}")
         conn.close()
 
@@ -309,51 +355,13 @@ def register_routes(app):
     @app.route('/collections')
     def collections():
         return render_template('collections.html')
-    
+
     #IVY CODE FOR IMPACT
     @app.route('/impact')
     def impact():
         print("Impact route hit", flush=True)
         user_id = session['user_id']  # Assuming the user is logged in and their ID is in the session
 
-        conn = get_db_connection()
-        cursor = conn.cursor()
-
-        # Query to fetch the donations posted by the user, including the score for each donation
-        cursor.execute("""
-            SELECT 
-                p.postings_id, 
-                p.post_title, 
-                p.post_date, 
-                p.pick_up_location, 
-                p.score
-            FROM postings p
-            WHERE p.donor_user_id = ? AND p.is_deleted = 0
-        """, (user_id,))
-             
-        rows = cursor.fetchall()
-
-        print(f"[DEBUG] Rows fetched from DB: {rows}", flush=True)  # Debug print for raw DB output
-
-        # Prepare the donations data for the template
-        donations = []
-        total_score = 0  # Initialize total_score
-
-        for row in rows:
-            donations.append({
-                'post_title': row['post_title'],
-                'score': row['score'],
-                'post_date': row['post_date'],
-                'pick_up_location': row['pick_up_location']
-            })
-            print(f"[DEBUG] Donation data being added: {donations[-1]}")  # Debug print
-            total_score += row['score']  # Accumulate the score
-
-        print(f"[DEBUG] Total Impact Score: {total_score}")  # Debug print        
-        conn.close()
-
-        # Pass the donations data to the template
-        return render_template('impact.html', donations=donations, total_score=total_score)
 
     #IVY CODE FOR CONNECTIONS
     @app.route('/connections')
@@ -381,7 +389,7 @@ def register_routes(app):
         rows = cursor.fetchall()
         print("[DEBUG] Raw rows from DB:")
         for row in rows:
-            print(dict(row))  # 👈 print each row as a dictionary    
+            print(dict(row))  # 👈 print each row as a dictionary
 
         conn.close()
 
@@ -436,7 +444,7 @@ def register_routes(app):
                 "INSERT INTO postings (donor_user_id, post_title, quantity, pick_up_location, description, post_status, post_date, item_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
                 (session["user_id"], title, quantity, pick_up_location, description, "new", post_date, item_id))
 
-            new_posting_id = cursor.lastrowid  # Get the inserted posting ID
+            new_posting_id = cursor.lastrowid  # Get the inserted Postings ID
 
             # Insert into `postings_audit` table
             cursor.execute(
@@ -476,14 +484,48 @@ def register_routes(app):
         global conversions
         conversions = [c for c in conversions if c['id'] != conversion_id]
         return redirect(url_for('impact'))
-    
+
     #IVY CODE FOR DISCOVER
     @app.route('/discover', methods=['GET'])
     def discover():
+        # Get filter parameters from the request (search, category, location)
+        search_query = request.args.get('search', '').lower()
+        category = request.args.get('category', '').lower()
+        location = request.args.get('location', '').lower()
+
+         # Query the database for posts that are not deleted
+        filtered_posts = Postings.query.filter(Postings.is_deleted == False)
+
+        # Apply search filter on title and description
+        if search_query:
+            filtered_posts = filtered_posts.filter(
+                (Postings.post_title.ilike(f'%{search_query}%')) |
+                (Postings.description.ilike(f'%{search_query}%'))
+            )
+
+        # Apply category filter (assuming 'category' is stored in 'post_title' or a related column)
+        if category:
+            filtered_posts = filtered_posts.filter(
+                Postings.post_title.ilike(f'%{category}%')
+            )
+
+            return render_template('discover.html', posts=filtered_posts, search=search_query, category=category,
+                                   donation_posts=donation_posts)
+        # Apply location filter (assuming 'location' is stored in 'pick_up_location' or a related column)
+        if location:
+            filtered_posts = filtered_posts.filter(
+                Postings.pick_up_location.ilike(f'%{location}%')
+            )
+
+        # Execute the query and get the filtered list of posts
+        filtered_posts = filtered_posts.all()
+
+        # Render the template with the filtered posts and search params
+        return render_template('discover.html', posts=filtered_posts, search=search_query, category=category, location=location)
         # Fetching query parameters from URL for filtering
         search_query = request.args.get('search', '').lower()  # Search term for title and description
         location = request.args.get('location', '').lower()   # Location filter
-    
+
         # Establish database connection
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -567,9 +609,10 @@ def register_routes(app):
 
 def create_app():
     app = Flask(__name__)
-    app.secret_key = "RENEE"
+    app.secret_key = 'gMVyzFKCx%xpP^@k8DEghT7Abm2vQ92tj!jJiyZSt5qod!W&A&5V8yi3E3qtKZbdG8P#H@DyLz$#sinWA2@c2s*ZkU%PH$J7NepyBqKjZWPE9NP$Q%U2E@w%bQa&!4R9'
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecoexchange.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    csrf = CSRFProtect(app)
 
     # Initialize extensions
     bcrypt.init_app(app)
@@ -586,7 +629,7 @@ app = create_app()
 
 # Database Connection
 def get_db_connection():
-    conn = sqlite3.connect("ecoexchange.db")
+    conn = sqlite3.connect("instance/ecoexchange.db")
     conn.row_factory = sqlite3.Row
     print("✅ Database connected successfully!")  # Debugging print
     return conn

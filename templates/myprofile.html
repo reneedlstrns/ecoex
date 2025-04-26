@@ -1,49 +1,126 @@
 <!DOCTYPE html>
 <html lang="en">
-    {% include 'head.html' %}
+{% include 'head.html' %}
 <body>
-    {% include 'navbar.html' %}
+{% include 'navbar.html' %}
 
-    <div class="container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="profile">
-                <img src="{{ url_for('static', filename='media/profilesample1.jpg') }}" alt="User Profile">
-                <h2>
-                    {% if user %}
-                        Hi, {{ user.nick_name }}!
-                    {% else %}
-                        Hi, Guest!
-                    {% endif %}
-                </h2>
-            </div>
-            <div class="impact-pts">
+<div class="container d-flex">
+    <!-- Sidebar -->
+    <aside class="sidebar me-4">
+        <div class="profile text-center mb-4">
+            <img src="{{ url_for('static', filename='media/profilesample1.jpg') }}" alt="User Profile"
+                 class="img-fluid rounded-circle mb-2">
+            <h2>
+                {% if user %}
+                Hi, {{ user.nick_name }}!
+                {% else %}
+                Hi, Guest!
+                {% endif %}
+            </h2>
+        </div>
+        <div class="impact-pts text-center mb-3">
                 <span>
                     <img src="{{ url_for('static', filename='media/recycle.png') }}" alt="Recycle Icon" class="icon">
                     You've made {{ total_score }} impact!
                     <img src="{{ url_for('static', filename='media/recycle.png') }}" alt="Recycle Icon" class="icon">
                 </span>
-            </div>
-            <ul class="sidebar-menu">
-                <li><a href="#" data-content="editprofile">Edit Profile</a></li>
-                <li><a href="#" data-content="donations">Donations</a></li>
-                <li><a href="#" data-content="collections">Collections</a></li>
-                <li><a href="#" data-content="impact">Impact</a></li>
-                <li><a href="#" data-content="connections">Connections</a></li>
-            </ul>
-        </aside>
+        </div>
+        <ul class="sidebar-menu list-unstyled">
+            <li><a href="#" data-content="editprofile">Edit Profile</a></li>
+            <li><a href="#" data-content="donations">Donations</a></li>
+            <li><a href="#" data-content="collections">Collections</a></li>
+            <li><a href="#" data-content="impact">Impact</a></li>
+            <li><a href="#" data-content="connections">Connections</a></li>
+        </ul>
+    </aside>
 
-        <!-- Main Content Section (Only One Section Visible at a Time) -->
-        <div class="content-container">
-            <div id="editprofile" class="content-section" style="display: none;">{% include 'editprofile.html' %}</div>
-            <div id="donations" class="content-section" style="display: none;">{% include 'donations.html' %}</div>
-            <div id="collections" class="content-section" style="display: none;">{% include 'collections.html' %}</div>
-            <div id="impact" class="content-section" style="display: none;">{% include 'impact.html' %}</div>
-            <div id="connections" class="content-section" style="display: none;">{% include 'connections.html' %}</div>
+    <!-- Main Content Section -->
+    <div class="flex-grow-1">
+        <div id="editprofile" class="content-section" style="display: none;">{% include 'editprofile.html' %}</div>
+        <div id="donations" class="content-section" style="display: none;">{% include 'donations.html' %}</div>
+        <div id="collections" class="content-section" style="display: none;">{% include 'collections.html' %}</div>
+        <div id="impact" class="content-section" style="display: none;">{% include 'impact.html' %}</div>
+        <div id="connections" class="content-section" style="display: none;">{% include 'connections.html' %}</div>
+
+        <!-- Profile Details Card -->
+        <div class="myprofile-details p-4 mt-5 mx-auto bg-light border rounded shadow" style="max-width: 1000px;">
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="fname" class="form-label">First Name</label>
+                    <p id="fname" aria-label="First Name">{{ user.fname }}</p>
+                </div>
+                <div class="col-md-6">
+                    <label for="lname" class="form-label">Last Name</label>
+                    <p id="lname" aria-label="Last Name">{{ user.lname }}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="company" class="form-label">Company</label>
+                    <p id="company" aria-label="Company">{{ user.company }}</p>
+                </div>
+                <div class="col-md-6">
+                    <label for="nick_name" class="form-label">Nickname</label>
+                    <p id="nick_name" aria-label="Nickname">{{ user.nick_name }}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="email" class="form-label">Email</label>
+                    <p id="email" aria-label="Email">{{ user.email }}</p>
+                </div>
+                <div class="col-md-6">
+                    <label for="mobile" class="form-label">Mobile</label>
+                    <p id="mobile" aria-label="Mobile">{{ user.mobile }}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-12">
+                    <label for="location_title" class="form-label">Location Title</label>
+                    <p id="location_title" aria-label="Location Title">{{ user.location_title }}</p>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6">
+                    <label for="address" class="form-label">Address</label>
+                    <p id="address" aria-label="Address">{{ user.address }}</p>
+                </div>
+                <div class="col-md-6">
+                    <label for="city" class="form-label">City</label>
+                    <p id="city" aria-label="City">{{ user.city }}</p>
+                </div>
+            </div>
         </div>
     </div>
+</div>
 
-    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
-    {% include 'footer.html' %}
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+const myProfileSection = document.querySelector('.myprofile-details');
+const sidebarLinks = document.querySelectorAll('.sidebar-menu a');
+
+sidebarLinks.forEach(link => {
+    link.addEventListener('click', function (e) {
+        const target = this.getAttribute('data-content');
+
+        // Hide profile when 'editprofile' is clicked
+        if (target === 'editprofile') {
+            myProfileSection.style.display = 'none';
+        }
+
+        // Show profile when 'editprofile' is NOT clicked (e.g., going back to profile view)
+        if (target === 'myprofile' || target === null) {
+            myProfileSection.style.display = 'block';
+        }
+    });
+});
+});
+
+</script>
+
+<script src="{{ url_for('static', filename='script.js') }}" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+{% include 'footer.html' %}
 </body>
 </html>

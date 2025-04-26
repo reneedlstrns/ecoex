@@ -13,6 +13,7 @@
             <div class="card mt-3">
                 <div class="card-body">
                     <form id="registrationForm" action="/login" method="POST">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                         <div class="form-group">
                             <label for="email">
                                 Email&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;

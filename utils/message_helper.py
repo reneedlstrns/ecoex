@@ -12,4 +12,4 @@ ERROR_CHOOSE_ANOTHER_PASSWORD = "Password cannot be the same as the old password
 # Success Messages
 SUCCESS_USER_CREATED = "User account created successfully."
 SUCCESS_PASSWORD_RESET = "Password reset successfully."
-
+SUCCESS_PROFILE_UPDATED = "Profile updated successfully."
