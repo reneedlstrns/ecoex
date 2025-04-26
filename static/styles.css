@@ -298,12 +298,18 @@ footer {
 .modal {
     display: none; /* Hidden by default */
     position: fixed;
-    z-index: 1000;
-    left: 0;
     top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000; /* Ensure modal appears above everything */
+    justify-content: center;
+    align-items: center;
+}
+
+.modal.show {
+    display: flex !important; /* ✅ Force modal to appear */
 }
 
 .modal-content {
@@ -397,6 +403,13 @@ footer {
     color: #006d57;
     text-align: left;
     width: 100%;
+}
+
+.highlight {
+    color: #006d57;
+    text-align: center;
+    font-size: 16px;
+    font-weight: bold;
 }
 
 #button-danger {
@@ -602,3 +615,66 @@ footer {
     bottom: 10px;
     right: 15px;
 }
+/* Donations List for Impact-Like Styling */
+
+.donations-list {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.donation-item {
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-left: 5px solid #4CAF50;
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0px 1px 3px rgba(0, 0, 0, 0.05);
+    text-align: left;
+    transition: box-shadow 0.3s ease;
+    max-width: 1000px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.donation-item:hover {
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.donation-item h3 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    color: #006d57;
+}
+
+.donation-item p {
+    font-size: 1rem;
+    margin: 6px 0;
+    color: #333;
+}
+
+.donation-item button {
+    background-color: #2196F3;
+    color: white;
+    padding: 8px 14px;
+    margin: 6px 6px 0 0;
+    border: none;
+    border-radius: 4px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.donation-item button:hover {
+    background-color: #1976D2;
+}
+
+.donation-item button:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+}
+
+

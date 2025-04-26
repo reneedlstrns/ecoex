@@ -1,31 +1,36 @@
-<div class="donations-list">
-    {% for donation in donations %}
-        <div class="donation-item">
-            <h3>{{ donation["post_title"] }}</h3>
-            <p><strong>Quantity:</strong> {{ donation["quantity"] }}</p>
-            <p><strong>Location:</strong> {{ donation["pick_up_location"] }}</p>
-            <p><strong>Description:</strong> {{ donation["description"] }}</p>
-            <p><strong>Status:</strong> {{ donation["post_status"] }}</p>
-            {% if donation["post_status"] in ["new", "open"] and donation["donor_user_id"] == session["user_id"] %}
-                <button>Edit</button>
-                <button>Delete</button>
-            {% elif donation["post_status"] == "locked" and donation["donor_user_id"] == session["user_id"] %}
-                <p>Requested by: {{ donation["collector_by_user_id"] }}</p>
-                <button>Approve</button>
-                <button>Reject</button>
-                <button>Edit</button>
-                <button>Delete</button>
-            {% elif donation["post_status"] == "collected" and donation["donor_user_id"] == session["user_id"] %}
-                <p>Collected by: {{ donation["collector_by_user_id"] }}</p>
-                <button>Delete</button>
-            {% elif donation["post_status"] in ["new", "open"] and donation["donor_user_id"] != session["user_id"] %}
-                <button>Collect</button>
-            {% elif donation["post_status"] == "locked" and donation["donor_user_id"] != session["user_id"] %}
-                <p>Requested by: {{ donation["collector_by_user_id"] }}</p>
-                <button disabled>Collect</button> <!-- Grayed out -->
-            {% elif donation["post_status"] == "collected" and donation["donor_user_id"] != session["user_id"] %}
-                <p>Collected by: {{ donation["collector_by_user_id"] }}</p>
-            {% endif %}
-        </div>
-    {% endfor %}
+<h2 class="page-title">Donations</h2>
+    <p class="highlight">You have {{ total_postings }} Donations!</p>
+
+<div class="donation-scroll-wrapper">
+    <div class="donations-list">
+        {% for donation in donations %}
+            <div class="donation-item">
+                <h3>{{ donation["post_title"] }}</h3>
+                <p><strong>Quantity:</strong> {{ donation["quantity"] }}</p>
+                <p><strong>Location:</strong> {{ donation["pick_up_location"] }}</p>
+                <p><strong>Description:</strong> {{ donation["description"] }}</p>
+                <p><strong>Status:</strong> {{ donation["post_status"] }}</p>
+                {% if donation["post_status"] in ["new", "open"] and donation["donor_user_id"] == session["user_id"] %}
+                    <button>Edit</button>
+                    <button>Delete</button>
+                {% elif donation["post_status"] == "locked" and donation["donor_user_id"] == session["user_id"] %}
+                    <p>Requested by: {{ donation["collector_by_user_id"] }}</p>
+                    <button>Approve</button>
+                    <button>Reject</button>
+                    <button>Edit</button>
+                    <button>Delete</button>
+                {% elif donation["post_status"] == "collected" and donation["donor_user_id"] == session["user_id"] %}
+                    <p>Collected by: {{ donation["collector_by_user_id"] }}</p>
+                    <button>Delete</button>
+                {% elif donation["post_status"] in ["new", "open"] and donation["donor_user_id"] != session["user_id"] %}
+                    <button>Collect</button>
+                {% elif donation["post_status"] == "locked" and donation["donor_user_id"] != session["user_id"] %}
+                    <p>Requested by: {{ donation["collector_by_user_id"] }}</p>
+                    <button disabled>Collect</button> <!-- Grayed out -->
+                {% elif donation["post_status"] == "collected" and donation["donor_user_id"] != session["user_id"] %}
+                    <p>Collected by: {{ donation["collector_by_user_id"] }}</p>
+                {% endif %}
+            </div>
+        {% endfor %}
+    </div>
 </div>
