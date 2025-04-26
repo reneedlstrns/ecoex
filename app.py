@@ -38,7 +38,7 @@ def register_routes(app):
             return redirect(url_for('login'))
 
         user_id = session['user_id']
-        user = User.query.get(user_id)
+        user = db.session.get(User, session['user_id'])
         if not user:
             return redirect(url_for('edit_profile', error_message=message_helper.ERROR_USER_NOT_FOUND))
 
@@ -366,7 +366,7 @@ def register_routes(app):
         user_id = session['user_id']  # Assuming the user is logged in and their ID is in the session
 
 <<<<<<< HEAD
-     
+
     @app.route('/connections')
     def connections():
         if 'user_email' in session:
@@ -393,8 +393,8 @@ def register_routes(app):
             return render_template('connections.html', connections=connections)
         else:
             return redirect(url_for('login'))
- 
-   
+
+
 =======
         conn = get_db_connection()
         cursor = conn.cursor()
@@ -478,7 +478,6 @@ def register_routes(app):
         return render_template('connections.html', requests=requests)
 
 
->>>>>>> 71379b21b9863e0553111f63ee596f2004041649
     @app.route('/hub')
     def hub():
         return render_template('hub.html')
@@ -667,7 +666,6 @@ def register_routes(app):
             return render_template('discover.html', posts=posts_list, search=search_query, location=location, total_postings=total_postings)
 
 
->>>>>>> 71379b21b9863e0553111f63ee596f2004041649
 
     @app.route('/donation/<post_id>')
     def view_donation(post_id):
@@ -705,7 +703,7 @@ app = create_app()
 
 # Database Connection
 def get_db_connection():
-    conn = sqlite3.connect("ecoexchange.db")
+    conn = sqlite3.connect("instance/ecoexchange.db")
     conn.row_factory = sqlite3.Row
     print("✅ Database connected successfully!")  # Debugging print
     return conn
@@ -713,27 +711,9 @@ def get_db_connection():
 
 
 
-
-def create_app():
-        app = Flask(__name__)
-        app.secret_key = "RENEE"
-        app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///ecoexchange.db'
-        app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-        # Initialize extensions
-        bcrypt.init_app(app)
-        db.init_app(app)
-
-        # Register routes
-        register_routes(app)
-
-        return app
-
-
 # RUN THE FLASK APP
 if __name__ == "__main__":
     print("✅ Flask app is starting...")
-    app = create_app()
     with app.app_context():
         print(f"✅ SQLAlchemy is using the database connection: {db.engine.url}")
     app.run(debug=True)
