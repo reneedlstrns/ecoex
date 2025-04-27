@@ -13,37 +13,50 @@
     {% include 'donate.html' %}
     <script src="{{ url_for('static', filename='script.js') }}" defer></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
+    document.addEventListener("DOMContentLoaded", function () {
     fetch("/api/check_login_status")
         .then(response => response.json())
         .then(data => {
             const authButtonsContainer = document.querySelector(".auth-buttons");
 
-            // Clear the container to avoid duplicate buttons
+            // Clear any existing content
             authButtonsContainer.innerHTML = "";
 
-            // Render login or logout button
+            // Create and add the DONATE button (always shown)
+            const donateButton = document.createElement("button");
+            donateButton.textContent = "DONATE";
+            donateButton.className = "donate";
+            donateButton.id = "donate-btn";
+            authButtonsContainer.appendChild(donateButton);
+
+            // Conditionally add LOGIN or LOGOUT button
             if (data.logged_in) {
-                authButtonsContainer.innerHTML = `
-                    <button class="logout" id="logout-btn">Log Out</button>
-                `;
-                document.getElementById("logout-btn").addEventListener("click", function () {
+                const logoutButton = document.createElement("button");
+                logoutButton.textContent = "Log Out";
+                logoutButton.className = "logout";
+                logoutButton.id = "logout-btn";
+                authButtonsContainer.appendChild(logoutButton);
+
+                logoutButton.addEventListener("click", function () {
+                    console.log("Logout clicked");
                     window.location.href = "/logout";
                 });
             } else {
-                authButtonsContainer.innerHTML = `
-                    <a href="/login">
-                        <button class="login" id="login-btn">Log In</button>
-                    </a>
-                `;
-            }
+                const loginLink = document.createElement("a");
+                loginLink.href = "/login";
 
-            // Add the DONATE button
-            authButtonsContainer.innerHTML += `
-                <button class="donate" id="donate-btn">DONATE</button>
-            `;
+                const loginButton = document.createElement("button");
+                loginButton.textContent = "Log In";
+                loginButton.className = "login";
+                loginButton.id = "login-btn";
+
+                loginLink.appendChild(loginButton);
+                authButtonsContainer.appendChild(loginLink);
+            }
         })
-        .catch(error => console.error("Error checking login status:", error));
-});
+        .catch(error => {
+            console.error("Error checking login status:", error);
+        });
+    });
     </script>
 </header>
