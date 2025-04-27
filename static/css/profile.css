@@ -77,6 +77,9 @@ html {
 
 .row {
     margin-bottom: 20px;
+    margin-left: 0;
+    margin-right: 0;
+    flex-wrap: wrap;
     display: flex;
     justify-content: space-between; /* Distribute columns evenly */
     gap: 20px; /* Add spacing between columns */
@@ -122,6 +125,7 @@ html {
     text-align: left;
     box-sizing: border-box; /* Include padding and border in width calculation */
 }
+
 
 .myprofile-details p {
     margin: 0; /* Remove extra margin */
