@@ -733,6 +733,10 @@ def register_routes(app):
 
         return jsonify({'success': True, 'message': 'Your request has been canceled.', 'button_text': 'Request to Collect'})
 
+    @app.route('/api/check_login_status')
+    def check_login_status():
+        return jsonify({"logged_in": "user_email" in session})
+
 
 def create_app():
     app = Flask(__name__)

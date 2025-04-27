@@ -8,12 +8,42 @@
             <li><a href="{{ url_for('hub') }}">Hub</a></li>
         </ul>
         <div class="auth-buttons">
-            <a href="/login">
-            <button class="login" id="login-btn">Log In</button>
-            </a>
-            <button class="donate" id="donate-btn">DONATE</button>
         </div>
     </nav>
     {% include 'donate.html' %}
     <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+    fetch("/api/check_login_status")
+        .then(response => response.json())
+        .then(data => {
+            const authButtonsContainer = document.querySelector(".auth-buttons");
+
+            // Clear the container to avoid duplicate buttons
+            authButtonsContainer.innerHTML = "";
+
+            // Render login or logout button
+            if (data.logged_in) {
+                authButtonsContainer.innerHTML = `
+                    <button class="logout" id="logout-btn">Log Out</button>
+                `;
+                document.getElementById("logout-btn").addEventListener("click", function () {
+                    window.location.href = "/logout";
+                });
+            } else {
+                authButtonsContainer.innerHTML = `
+                    <a href="/login">
+                        <button class="login" id="login-btn">Log In</button>
+                    </a>
+                `;
+            }
+
+            // Add the DONATE button
+            authButtonsContainer.innerHTML += `
+                <button class="donate" id="donate-btn">DONATE</button>
+            `;
+        })
+        .catch(error => console.error("Error checking login status:", error));
+});
+    </script>
 </header>
