@@ -4,6 +4,7 @@ html {
     color-scheme: light dark;
 }
 
+/* Profile Edit Form Styles */
 .profile-details {
     display: flex;
     flex-direction: column; /* Stack items vertically */
@@ -391,22 +392,6 @@ html {
     padding: 15px 0;
     border-bottom: 1px solid #ccc;
 }
-/* Profile Edit Form Styles */
-.profile-details {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    background-color: #FFFFFF;
-    color: #000000;
-    padding: 20px;
-    width: 80%;
-    max-width: 900px; /* Set a max width to ensure the form doesn't get too wide */
-    margin: 20px auto;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    border: 1px solid #ddd;
-    line-height: 1.6;
-}
-
 
 .profile-details h2 {
     font-size: 24px;
