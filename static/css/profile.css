@@ -11,7 +11,7 @@ html {
     background-color: #FFFFFF;
     color: #000000;
     padding: 20px;
-    width: 60%;
+    width: calc(100% - 2 * 16px);
     margin: 20px auto; /* Center the container with spacing */
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border: 1px solid #ddd;
@@ -105,13 +105,6 @@ html {
     font-size: 1.2rem; /* Slightly larger font size */
 }
 
-.profile-details {
-    text-align: left;
-    margin: 0 auto;
-    padding: 10px;
-    line-height: 1.6;
-}
-
 .myprofile-details {
     text-align: left;
     margin: 0 auto;
@@ -128,3 +121,30 @@ html {
 #editProfileModal {
     display: none;
 }
+
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.modal-content {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    min-width: 300px;
+    text-align: center;
+}
+.close {
+    float: right;
+    font-size: 20px;
+    cursor: pointer;
+}
+

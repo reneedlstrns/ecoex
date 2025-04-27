@@ -108,6 +108,10 @@ sidebarLinks.forEach(link => {
             myProfileSection.style.display = 'none';
         }
 
+        if (target === 'donations' || target === 'collections' || target === 'impact' || target === 'connections') {
+          myProfileSection.style.display = "none";
+        }
+
         // Show profile when 'editprofile' is NOT clicked (e.g., going back to profile view)
         if (target === 'myprofile' || target === null) {
             myProfileSection.style.display = 'block';
