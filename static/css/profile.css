@@ -119,6 +119,7 @@ html {
     padding: 20px;
     width: calc(100% - 2 * 16px);
     margin: 20px auto; /* Center the container with spacing */
+    margin-left: 150px;
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
     border: 1px solid #ddd;
     line-height: 1.6;
