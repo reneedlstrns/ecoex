@@ -15,6 +15,7 @@ class User(db.Model):
     address = db.Column(db.String(256), nullable=False)
     city = db.Column(db.String(50), nullable=False)
     company = db.Column(db.String(50), nullable=True)
+    photo = db.Column(db.LargeBinary, nullable=True)
     # title = db.Column(db.String(50), nullable=True)
 
     def to_dict(self):

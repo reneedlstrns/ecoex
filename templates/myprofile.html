@@ -8,8 +8,12 @@
     <!-- Sidebar -->
     <aside class="sidebar me-4">
         <div class="profile text-center mb-4">
-            <img src="{{ url_for('static', filename='media/profilesample1.jpg') }}" alt="User Profile"
-                 class="img-fluid rounded-circle mb-2">
+            <!-- Check if the user has a photo; if yes, display it. Otherwise, show the default image -->
+            {% if user.photo %}
+                <img src="data:image/jpeg;base64,{{ user.photo | b64encode }}" alt="User Profile">
+            {% else %}
+                <img src="{{ url_for('static', filename='media/anonymous_sample.jpg') }}" alt="User Profile">
+            {% endif %}
             <h2 id="usergreeting">
                 {% if user %}
                 Hi, {{ user.nick_name }}!
