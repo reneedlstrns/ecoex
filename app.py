@@ -27,7 +27,6 @@ def register_routes(app):
                 return render_template("login.html", error_message=error_message), 401
         return render_template("login.html")
 
-
     @app.route("/logout")
     def logout():
         session.pop('user_email', None)
@@ -62,7 +61,6 @@ def register_routes(app):
             return redirect(url_for('edit_profile', error_message=response['error']))
 
         return redirect(url_for('myprofile', success_message=message_helper.SUCCESS_PROFILE_UPDATED))
-
 
     @app.route("/register", methods=["GET", "POST"])
     def registration():
@@ -110,7 +108,6 @@ def register_routes(app):
 
         return render_template("register.html", success=False, message='')
 
-
     @app.route("/resetPassword", methods=["GET", "POST"])
     def reset_password():
         """
@@ -156,7 +153,6 @@ def register_routes(app):
                                        message=message_helper.SUCCESS_PASSWORD_RESET)
 
         return render_template("reset.html", success=False, message='')
-
 
     @app.route('/api/create_user', methods=['POST'])
     def api_create_user():
@@ -218,7 +214,6 @@ def register_routes(app):
             print(f"Error occurred: {e}")
             return "An error occurred", 500
 
-
     @app.route("/myprofile")
     def myprofile():
         success_message = request.args.get("success_message", None)
@@ -268,7 +263,6 @@ def register_routes(app):
             """, (session["user_id"], session["user_id"]))
             total_connections = cursor.fetchone()["total_connections"]
 
-
             # 💥 Impact data (for impact.html)
             cursor.execute("""
                 SELECT 
@@ -291,7 +285,6 @@ def register_routes(app):
                 'connection_status': row['connection_status']
             } for row in connection_rows]
 
-
             # Format impact
             impact_donations = []
             total_impact_score = 0
@@ -303,7 +296,6 @@ def register_routes(app):
                     'pick_up_location': row['pick_up_location']
                 })
                 total_impact_score += row['score']
-
 
             return render_template(
                 "myprofile.html",
@@ -319,7 +311,6 @@ def register_routes(app):
             )
         else:
             return redirect(url_for('login'))
-
 
     @app.route("/donations")
     def donations():
@@ -354,12 +345,11 @@ def register_routes(app):
 
         return render_template("donations.html", donations=donations, total_postings=total_postings)
 
-
     @app.route('/collections')
     def collections():
         return render_template('collections.html')
 
-    #IVY CODE FOR IMPACT
+    # IVY CODE FOR IMPACT
     @app.route('/impact')
     def impact():
         print("Impact route hit", flush=True)
@@ -379,7 +369,7 @@ def register_routes(app):
             FROM postings p
             WHERE p.donor_user_id = ? AND p.is_deleted = 0
         """, (user_id,))
-             
+
         rows = cursor.fetchall()
 
         print(f"[DEBUG] Rows fetched from DB: {rows}", flush=True)  # Debug print for raw DB output
@@ -404,8 +394,7 @@ def register_routes(app):
         # Pass the donations data to the template
         return render_template('impact.html', donations=donations, total_score=total_score)
 
-
-    #IVY CODE FOR CONNECTIONS
+    # IVY CODE FOR CONNECTIONS
     @app.route('/connections')
     def connections():
         if "user_id" not in session:
@@ -446,7 +435,6 @@ def register_routes(app):
         print("[DEBUG] Requests to be passed to template:", requests)
         # Pass the data to the template
         return render_template('connections.html', requests=requests)
-
 
     @app.route('/hub')
     def hub():
@@ -527,12 +515,12 @@ def register_routes(app):
         conversions = [c for c in conversions if c['id'] != conversion_id]
         return redirect(url_for('impact'))
 
-    #IVY CODE FOR DISCOVER
+    # IVY CODE FOR DISCOVER
     @app.route('/discover', methods=['GET'])
     def discover():
         # Fetching query parameters from URL for filtering
         search_query = request.args.get('search', '').lower()  # Search term for title and description
-        location = request.args.get('location', '').lower()   # Location filter
+        location = request.args.get('location', '').lower()  # Location filter
 
         # Debugging: Print the values of search_query and location
         print("Search query:", search_query)
@@ -569,7 +557,7 @@ def register_routes(app):
 
         # Debugging: Print the final query and filters
         print("Final SQL query:", query)
-        print("Filters:", filters)    
+        print("Filters:", filters)
 
         # Execute the query with filters
         cursor.execute(query, filters)
@@ -583,7 +571,6 @@ def register_routes(app):
         """)
         total_postings = cursor.fetchone()['total_postings']
 
-
         requested_ids = []
 
         if 'user_id' in session:
@@ -593,8 +580,6 @@ def register_routes(app):
                 WHERE requested_by_user_id = ? AND change_type = 'Requested'
             """, (session['user_id'],))
             requested_ids = [row['item_id'] for row in cursor.fetchall()]
-
-
 
         # Close the connection
         conn.close()
@@ -611,20 +596,21 @@ def register_routes(app):
                 'username': post['username']
             })
         # Debugging: Print the posts list to see if data is being fetched correctly
-        print("Posts List:", posts_list)    
+        print("Posts List:", posts_list)
 
         # If it's an AJAX request, return JSON, else render the template
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':  # AJAX request
             return jsonify({'posts': posts_list})
         else:
-            return render_template('discover.html', posts=posts_list, search=search_query, location=location, total_postings=total_postings, requested_ids=requested_ids)
+            return render_template('discover.html', posts=posts_list, search=search_query, location=location,
+                                   total_postings=total_postings, requested_ids=requested_ids)
 
     # View donations via discover page 042625
     @app.route('/view_donation/<int:post_id>')
     def view_donation(post_id):
         conn = get_db_connection()
         cursor = conn.cursor()
-    
+
         cursor.execute("""
             SELECT 
                 p.post_title AS title, 
@@ -637,7 +623,7 @@ def register_routes(app):
             JOIN users u ON p.donor_user_id = u.user_id
             WHERE p.postings_id = ?
         """, (post_id,))
-    
+
         post = cursor.fetchone()
         conn.close()
 
@@ -712,7 +698,8 @@ def register_routes(app):
         conn.commit()
         conn.close()
 
-        return jsonify({'success': True, 'message': 'Your request has been submitted!', 'button_text': 'Cancel Request'})
+        return jsonify(
+            {'success': True, 'message': 'Your request has been submitted!', 'button_text': 'Cancel Request'})
 
     @app.route('/cancel_request/<int:post_id>', methods=['POST'])
     def cancel_request(post_id):
@@ -733,7 +720,8 @@ def register_routes(app):
         conn.commit()
         conn.close()
 
-        return jsonify({'success': True, 'message': 'Your request has been canceled.', 'button_text': 'Request to Collect'})
+        return jsonify(
+            {'success': True, 'message': 'Your request has been canceled.', 'button_text': 'Request to Collect'})
 
     @app.route('/api/check_login_status')
     def check_login_status():
@@ -766,8 +754,6 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     print("✅ Database connected successfully!")  # Debugging print
     return conn
-
-
 
 
 # RUN THE FLASK APP
