@@ -14,7 +14,7 @@
     <aside class="sidebar">
         <div class="profile">
             <img src="{{ url_for('static', filename='media/profilesample1.jpg') }}" alt="User Profile">
-            <h2>
+            <h2 id="usergreeting">
                 {% if user %}
                 Hi, {{ user.nick_name }}!
                 {% else %}
