@@ -313,7 +313,9 @@ def register_routes(app):
                 requests=requests,  # ✅ this is key!
                 impact_donations=impact_donations,
                 total_impact_score=total_impact_score,
-                total_connections=total_connections
+                total_connections=total_connections,
+                success_message=success_message,
+                error_message=error_message
             )
         else:
             return redirect(url_for('login'))

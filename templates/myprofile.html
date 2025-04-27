@@ -94,6 +94,40 @@
     </div>
 </div>
 
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-labelledby="successModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="successModalLabel">Success</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Error Modal -->
+<div class="modal fade" id="errorModal" tabindex="-1" aria-labelledby="errorModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="errorModalLabel">Error</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 <script>
 document.addEventListener("DOMContentLoaded", function () {
 const myProfileSection = document.querySelector('.myprofile-details');
@@ -120,6 +154,30 @@ sidebarLinks.forEach(link => {
 });
 });
 
+</script>
+
+<!-- Modal Script  -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        crossorigin="anonymous"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const successMessage = {{ success_message | default('null') | tojson | safe }};
+    const errorMessage = {{ error_message | default('null') | tojson | safe }};
+
+    if (successMessage) {
+      const successModalEl = document.getElementById('successModal');
+      successModalEl.querySelector('.modal-body').textContent = successMessage;
+      const successModal = new bootstrap.Modal(successModalEl);
+      successModal.show();
+    }
+
+    if (errorMessage) {
+      const errorModalEl = document.getElementById('errorModal');
+      errorModalEl.querySelector('.modal-body').textContent = errorMessage;
+      const errorModal = new bootstrap.Modal(errorModalEl);
+      errorModal.show();
+    }
+  });
 </script>
 
 <script src="{{ url_for('static', filename='script.js') }}" defer></script>

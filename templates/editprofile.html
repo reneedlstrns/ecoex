@@ -105,37 +105,6 @@
     </div>
 </div>
 
-<div id="successModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <p>{{ success_message }}</p>
-    </div>
-</div>
-<div id="errorModal" class="modal" style="display: none;">
-    <div class="modal-content">
-        <span class="close" onclick="closeModal()">&times;</span>
-        <p>{{ error_message }}</p>
-    </div>
-</div>
-
-<script>
-    // Show the modal if there's a success or error message
-    const successMessage = "{{ success_message|safe }}";
-    const errorMessage = "{{ error_message|safe }}";
-
-    if (successMessage) {
-        document.getElementById('successModal').style.display = 'block';
-    } else if (errorMessage) {
-        document.getElementById('errorModal').style.display = 'block';
-    }
-
-    // Close the modal
-    function closeModal() {
-        document.getElementById('successModal').style.display = 'none';
-        document.getElementById('errorModal').style.display = 'none';
-    }
-</script>
-
 {% include 'footer.html' %}
 </body>
 </html>
