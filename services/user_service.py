@@ -13,7 +13,7 @@ def get_all_users():
         return [e]  # You can customize this response or log the error
 
 
-def create_user(nick_name, fname, lname, mobile, location_title, address, city, company, email, password):
+def create_user(nick_name, fname, lname, mobile, location_title, address, city, company, email, password, photo_data=None, photo_filename=None):
     hashed_password = bcrypt.generate_password_hash(password).decode('utf-8')
 
     try:
@@ -27,7 +27,9 @@ def create_user(nick_name, fname, lname, mobile, location_title, address, city, 
             city=city,
             company=company,
             email=email,
-            password=hashed_password
+            password=hashed_password,
+            photo=photo_data,
+            photo_filename=photo_filename
         )
         db.session.add(user)
         db.session.commit()
