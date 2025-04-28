@@ -5,6 +5,51 @@
     <title>Title</title>
 </head>
 <body>
-Add your collections here.
+{% for collection in collections %}
+    <div class="collection-item">
+        <h3>{{ collection["post_title"] }}</h3>
+        <p><strong>Quantity:</strong> {{ collection["quantity"] }}</p>
+        <p><strong>Location:</strong> {{ collection["pick_up_location"] }}</p>
+        <p><strong>Description:</strong> {{ collection["description"] }}</p>
+        <p><strong>Status:</strong> {{ collection["post_status"] }}</p>
+
+        {% if collection["post_status"] in ["new", "open"] and collection["donor_user_id"] == session["user_id"] %}
+            <form action="/edit_donation/{{ collection['post_id'] }}" method="GET">
+                <button type="submit">Edit</button>
+            </form>
+            <form action="/delete_donation/{{ collection['post_id'] }}" method="POST">
+                <button type="submit">Delete</button>
+            </form>
+        {% elif collection["post_status"] == "locked" and collection["donor_user_id"] == session["user_id"] %}
+            <p>Requested by: {{ collection["collected_by_user_id"] }}</p>
+            <form action="/update_collection_status/{{ collection['post_id'] }}/approve" method="POST">
+                <button type="submit">Approve</button>
+            </form>
+            <form action="/update_collection_status/{{ collection['post_id'] }}/reject" method="POST">
+                <button type="submit">Reject</button>
+            </form>
+            <form action="/edit_donation/{{ collection['post_id'] }}" method="GET">
+                <button type="submit">Edit</button>
+            </form>
+            <form action="/delete_donation/{{ collection['post_id'] }}" method="POST">
+                <button type="submit">Delete</button>
+            </form>
+        {% elif collection["post_status"] == "collected" and collection["donor_user_id"] == session["user_id"] %}
+            <p>Collected by: {{ collection["collected_by_user_id"] }}</p>
+            <form action="/delete_donation/{{ collection['post_id'] }}" method="POST">
+                <button type="submit">Delete</button>
+            </form>
+        {% elif collection["post_status"] in ["new", "open"] and collection["donor_user_id"] != session["user_id"] %}
+            <form action="/collect_donation/{{ collection['post_id'] }}" method="POST">
+                <button type="submit">Collect</button>
+            </form>
+        {% elif collection["post_status"] == "locked" and collection["donor_user_id"] != session["user_id"] %}
+            <p>Requested by: {{ collection["collected_by_user_id"] }}</p>
+            <button disabled>Collect</button> <!-- Grayed out -->
+        {% elif collection["post_status"] == "collected" and collection["donor_user_id"] != session["user_id"] %}
+            <p>Collected by: {{ collection["collected_by_user_id"] }}</p>
+        {% endif %}
+    </div>
+{% endfor %}
 </body>
 </html>

@@ -296,28 +296,39 @@ footer {
 .modal {
     display: none; /* Hidden by default */
     position: fixed;
-    z-index: 1000;
-    left: 0;
     top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 50, 20, 0.7);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
 }
 
+.modal.show {
+    display: flex !important;
+}
+
+/* Modal Content */
 .modal-content {
-    background: white;
+    background: #f4f9f4;
+    border-radius: 12px;
     padding: 20px;
-    width: 50%;
-    margin: 10% auto;
-    border-radius: 10px;
-    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    width: 80%;
+    max-width: 500px;
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.3);
 }
 
+/* Close Button */
 .close {
     float: right;
     font-size: 24px;
     cursor: pointer;
+    color: #2f4f2f;
 }
+
 /* Connections Section */
 .request-list {
     list-style-type: none; /* Removes the bullets from the list items */
@@ -420,6 +431,46 @@ footer {
 }
 
 /* Discover Page Styles */
+
+.donation-form .form-group {
+    margin-bottom: 16px;
+}
+
+.donation-form label {
+    font-weight: bold;
+    color: #2f4f2f;
+}
+
+.donation-form input,
+.donation-form textarea,
+.donation-form select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px solid #2f4f2f;
+    background: #ffffff;
+}
+
+.donation-form .btn-submit {
+    background: #6ebf77;
+    color: white;
+    font-size: 18px;
+    padding: 10px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s ease-in-out;
+    width: 100%;
+}
+
+.donation-form .btn-submit:hover {
+    background: #558f58;
+}
+
+/* Item Description & Score */
+.item-info {
+    font-style: italic;
+    color: #2f4f2f;
+}
 
 .donation-section {
     width: 100%;
