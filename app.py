@@ -1,8 +1,11 @@
 import sqlite3
 import logging
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, Response
 from flask_wtf.csrf import CSRFProtect
 from datetime import datetime
+
+from werkzeug.utils import secure_filename
+
 from extensions import bcrypt, db
 from models.user import User
 from models.postings import Postings
@@ -10,6 +13,7 @@ from services import user_service
 from services.user_service import validate_user, get_user_by_email, create_user
 from utils import message_helper
 
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
 
 def register_routes(app):
     @app.route("/login", methods=["GET", "POST"])
@@ -32,17 +36,20 @@ def register_routes(app):
         session.pop('user_email', None)
         return redirect(url_for('index'))
 
+
     @app.route("/updateProfile", methods=["POST"])
     def update_profile():
         if 'user_id' not in session:
             return redirect(url_for('login'))
 
         user_id = session['user_id']
-        user = db.session.get(User, session['user_id'])
+        user = db.session.get(User, user_id)
         if not user:
             return redirect(url_for('edit_profile', error_message=message_helper.ERROR_USER_NOT_FOUND))
 
         data = request.form
+        photo = request.files.get('photo')  # <-- Get uploaded file
+
         nick_name = data.get('nick_name')
         fname = data.get('fname')
         lname = data.get('lname')
@@ -55,15 +62,27 @@ def register_routes(app):
         if not nick_name or not fname or not lname or not mobile or not location_title or not address or not city:
             return redirect(url_for('edit_profile', error_message=message_helper.ERROR_FILL_ALL_REQUIRED_FIELDS))
 
+        # Update basic info first
         response = user_service.update_user(user_id, nick_name, fname, lname, mobile, location_title, address, city,
                                             company)
         if 'error' in response:
             return redirect(url_for('edit_profile', error_message=response['error']))
 
+        # Now handle profile photo update if user uploaded a new one
+        if photo and photo.filename != '':
+            user.photo = photo.read()
+            user.photo_filename = secure_filename(photo.filename)
+
+        db.session.commit()
+
         return redirect(url_for('myprofile', success_message=message_helper.SUCCESS_PROFILE_UPDATED))
+
 
     @app.route("/register", methods=["GET", "POST"])
     def registration():
+        photo_data = None
+        photo_filename = None
+
         if request.method == 'POST':
             data = request.form
             nick_name = data.get('nick_name')
@@ -75,6 +94,7 @@ def register_routes(app):
             city = data.get('city')
             company = data.get('company')
             email = data.get('email')
+            profile_picture = request.files.get('profile_picture')
             password = data.get('password')
             confirm_password = data.get('confirmPassword')
 
@@ -98,8 +118,13 @@ def register_routes(app):
                 return render_template("register.html", success=False,
                                        message=message_helper.ERROR_EMAIL_ALREADY_EXISTS)
 
+            if profile_picture and allowed_file(profile_picture.filename):
+                photo_filename = secure_filename(profile_picture.filename)
+                photo_data = profile_picture.read()  # Read the uploaded image content
+
             response = user_service.create_user(nick_name, fname, lname, mobile, location_title, address, city, company,
-                                                email, password)
+                                                email, password, photo_data, photo_filename)
+
             if 'error' in response:
                 return render_template("register.html", success=False, message=response['error'])
 
@@ -107,6 +132,18 @@ def register_routes(app):
                                    message=message_helper.SUCCESS_USER_CREATED)
 
         return render_template("register.html", success=False, message='')
+
+    def allowed_file(filename):
+        return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+    @app.route('/user/<int:user_id>/photo')
+    def user_photo(user_id):
+        user = User.query.get_or_404(user_id)
+        if user.photo:
+            # You could check the file extension if you want to set the correct MIME type
+            return Response(user.photo, mimetype='image/jpeg')  # Assuming jpg, adjust if needed
+        else:
+            return '', 404
 
     @app.route("/resetPassword", methods=["GET", "POST"])
     def reset_password():
@@ -442,8 +479,13 @@ def register_routes(app):
 
     @app.route("/donate", methods=["GET", "POST"])
     def donate():
+        if "user_id" not in session:
+            return redirect(url_for("login"))  # Redirect if user is not logged in
+
         conn = get_db_connection()
         cursor = conn.cursor()
+
+        #  Fetch available items for dropdown
         cursor.execute("SELECT item_id, item_name, description, score FROM items")
         items = cursor.fetchall()
 
@@ -455,42 +497,44 @@ def register_routes(app):
             item_id = request.form["item_id"]
             post_date = datetime.today().strftime('%Y-%m-%d')
 
-            # Check for an existing similar donation
+            # Check for duplicate donation
             cursor.execute(
                 "SELECT * FROM postings WHERE donor_user_id = ? AND item_id = ? AND quantity = ? AND pick_up_location = ? AND post_date = ?",
-                (session["user_id"], item_id, quantity, pick_up_location, post_date))
+                (session["user_id"], item_id, quantity, pick_up_location, post_date)
+            )
             existing_post = cursor.fetchone()
 
             if existing_post:
-                return "❌ Error: A similar donation already exists!", 400
+                conn.close()
+                return "❌ Error: A similar donation already exists!", 400  # Prevent duplicate entry
 
             # Fetch item score for calculation
             cursor.execute("SELECT score FROM items WHERE item_id = ?", (item_id,))
             item_score = cursor.fetchone()[0]
-            calculated_score = quantity * item_score
+            calculated_score = quantity * item_score  # Calculate donation score
 
             # Insert new donation into `postings` table
             cursor.execute(
                 "INSERT INTO postings (donor_user_id, post_title, quantity, pick_up_location, description, post_status, post_date, item_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-                (session["user_id"], title, quantity, pick_up_location, description, "new", post_date, item_id))
+                (session["user_id"], title, quantity, pick_up_location, description, "new", post_date, item_id)
+            )
 
-            new_posting_id = cursor.lastrowid  # Get the inserted Postings ID
+            new_posting_id = cursor.lastrowid  # Get the inserted posting ID
 
-            # Insert into `postings_audit` table
+            # Insert into `postings_audit` table for tracking
             cursor.execute(
                 "INSERT INTO postings_audit (post_id, posted_by_user_id, post_status, post_title, post_date, item_id, quantity, pick_up_location, transaction_date, change_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (
-                    new_posting_id, session["user_id"], "new", title, post_date, item_id, quantity, pick_up_location,
-                    post_date,
-                    "User_posted"))
+                (new_posting_id, session["user_id"], "new", title, post_date, item_id, quantity, pick_up_location,
+                 post_date, "User_posted")
+            )
 
             conn.commit()
             conn.close()
 
-            return redirect(url_for("myprofile"))  # ✅ Redirect back to profile after successful donation
+            return redirect(url_for("myprofile"))  # Redirect back to profile after successful donation
 
         conn.close()
-        return render_template("donate_form.html", items=items)  # NEW TEMPLATE
+        return render_template("donate_form.html", items=items)  # Render donation form with item data
 
     # IVY CODE:
     @app.route('/request/<request_id>')
@@ -726,6 +770,96 @@ def register_routes(app):
     @app.route('/api/check_login_status')
     def check_login_status():
         return jsonify({"logged_in": "user_email" in session})
+
+    @app.route("/edit_donation/<int:post_id>", methods=["GET", "POST"])
+    def edit_donation(post_id):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Fetch donation details
+        cursor.execute("SELECT * FROM postings WHERE post_id = ? AND donor_user_id = ?", (post_id, session["user_id"]))
+        donation = cursor.fetchone()
+
+        if not donation:
+            conn.close()
+            return "❌ Error: Donation not found or unauthorized!", 403
+
+        if request.method == "POST":
+            title = request.form["post_title"]
+            quantity = int(request.form["quantity"])
+            pick_up_location = request.form["pick_up_location"]
+            description = request.form["description"]
+
+            cursor.execute(
+                "UPDATE postings SET post_title = ?, quantity = ?, pick_up_location = ?, description = ? WHERE post_id = ?",
+                (title, quantity, pick_up_location, description, post_id)
+            )
+
+            conn.commit()
+            conn.close()
+
+            return redirect(url_for("collections"))  # Redirect after update
+
+        conn.close()
+        return render_template("edit_donation.html", donation=donation)
+
+    @app.route("/delete_donation/<int:post_id>", methods=["POST"])
+    def delete_donation(post_id):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Ensure only the donor can delete
+        cursor.execute("DELETE FROM postings WHERE post_id = ? AND donor_user_id = ?", (post_id, session["user_id"]))
+
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for("collections"))
+
+    @app.route("/collect_donation/<int:post_id>", methods=["POST"])
+    def collect_donation(post_id):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Ensure user is NOT the donor before requesting collection
+        cursor.execute(
+            "UPDATE postings SET post_status = 'locked', collected_by_user_id = ? WHERE post_id = ? AND donor_user_id != ?",
+            (session["user_id"], post_id, session["user_id"]))
+
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for("collections"))
+
+    @app.route("/update_collection_status/<int:post_id>/<string:action>", methods=["POST"])
+    def update_collection_status(post_id, action):
+        if "user_id" not in session:
+            return redirect(url_for("login"))
+
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        if action == "approve":
+            cursor.execute("UPDATE postings SET post_status = 'collected' WHERE post_id = ? AND donor_user_id = ?",
+                           (post_id, session["user_id"]))
+        elif action == "reject":
+            cursor.execute(
+                "UPDATE postings SET post_status = 'open', collected_by_user_id = NULL WHERE post_id = ? AND donor_user_id = ?",
+                (post_id, session["user_id"]))
+
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for("collections"))
 
 
 def create_app():
