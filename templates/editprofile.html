@@ -15,7 +15,7 @@
         <div class="profile">
             <!-- Check if the user has a photo; if yes, display it. Otherwise, show the default image -->
             {% if user.photo %}
-                <img src="data:image/jpeg;base64,{{ user.photo | b64encode }}" alt="User Profile">
+                <img src="{{ url_for('user_photo', user_id=user.user_id) }}" alt="User Profile">
             {% else %}
                 <img src="{{ url_for('static', filename='media/anonymous_sample.jpg') }}" alt="User Profile">
             {% endif %}
@@ -47,7 +47,7 @@
     <div class="content-container">
         <div class="profile-details">
             <h2>Edit Profile</h2>
-            <form action="/updateProfile" method="POST" novalidate>
+            <form action="/updateProfile" method="POST" enctype="multipart/form-data" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="row">
                 <div class="col-md-6">
@@ -102,6 +102,12 @@
                     <label for="city" class="form-label">City</label>
                     <input type="text" class="form-control" id="city" name="city" value="{{ user.city }}" required
                            aria-label="City">
+                </div>
+            </div>
+             <div class="row">
+                <div class="col-md-12">
+                    <label for="photo" class="form-label">Update Profile Picture</label>
+                    <input type="file" class="form-control" id="photo" name="photo" accept="image/*">
                 </div>
             </div>
             <button type="submit" class="btn btn-primary">Update Profile</button>

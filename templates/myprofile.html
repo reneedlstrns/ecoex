@@ -10,7 +10,7 @@
         <div class="profile text-center mb-4">
             <!-- Check if the user has a photo; if yes, display it. Otherwise, show the default image -->
             {% if user.photo %}
-                <img src="data:image/jpeg;base64,{{ user.photo | b64encode }}" alt="User Profile">
+                <img src="{{ url_for('user_photo', user_id=user.user_id) }}" alt="User Profile">
             {% else %}
                 <img src="{{ url_for('static', filename='media/anonymous_sample.jpg') }}" alt="User Profile">
             {% endif %}
