@@ -92,9 +92,13 @@ form .form-group input {
     height: 100%;
     background: rgba(0, 50, 20, 0.7);
     backdrop-filter: blur(8px);
-    z-index: 1000;
+    z-index: 1050;
     justify-content: center;
     align-items: center;
+}
+
+.modal-backdrop {
+    z-index: 1040; /* Ensure backdrop is below the modal */
 }
 
 .modal.show {
