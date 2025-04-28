@@ -22,13 +22,6 @@
             // Clear any existing content
             authButtonsContainer.innerHTML = "";
 
-            // Create and add the DONATE button (always shown)
-            const donateButton = document.createElement("button");
-            donateButton.textContent = "DONATE";
-            donateButton.className = "donate";
-            donateButton.id = "donate-btn";
-            authButtonsContainer.appendChild(donateButton);
-
             // Conditionally add LOGIN or LOGOUT button
             if (data.logged_in) {
                 const logoutButton = document.createElement("button");
@@ -53,6 +46,13 @@
                 loginLink.appendChild(loginButton);
                 authButtonsContainer.appendChild(loginLink);
             }
+
+            // Create and add the DONATE button (always shown)
+            const donateButton = document.createElement("button");
+            donateButton.textContent = "DONATE";
+            donateButton.className = "donate";
+            donateButton.id = "donate-btn";
+            authButtonsContainer.appendChild(donateButton);
         })
         .catch(error => {
             console.error("Error checking login status:", error);
