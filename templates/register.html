@@ -56,7 +56,7 @@
         <div class="row justify-content-center">
             <div class="col-md-6">
                 <h3>Create Your Account</h3>
-                <form id="registrationForm" action="/register" method="POST">
+                <form id="registrationForm" action="/register" method="POST" enctype="multipart/form-data">
                     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-group">
                         <label for="nick_name">Nickname</label>
@@ -113,6 +113,10 @@
                         <label for="confirmPassword">Confirm Password</label>
                         <input type="password" class="form-control" id="confirmPassword" name="confirmPassword"
                                placeholder="Confirm Password" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile_picture">Profile Picture</label>
+                        <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*">
                     </div>
                     <button type="submit" class="btn btn-primary btn-block">Register</button>
                 </form>
